@@ -1,0 +1,166 @@
+import { controlPolygonBBox } from "./bezier";
+import { rotatePoint } from "../utils/matrix";
+import type { Point, SceneNode } from "./types";
+
+/** Rough width-per-character factor for the approximate text bbox (no DOM measurement available in pure geometry code). */
+const TEXT_CHAR_WIDTH_FACTOR = 0.56;
+
+export interface BBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Bounding box of the shape in its own local, untransformed coordinate space. */
+export function localBBox(node: SceneNode): BBox {
+  switch (node.type) {
+    case "rect":
+      return { x: 0, y: 0, width: node.width, height: node.height };
+    case "ellipse":
+      return { x: -node.rx, y: -node.ry, width: node.rx * 2, height: node.ry * 2 };
+    case "line": {
+      const minX = Math.min(0, node.x2);
+      const minY = Math.min(0, node.y2);
+      return {
+        x: minX,
+        y: minY,
+        width: Math.abs(node.x2) || 0.0001,
+        height: Math.abs(node.y2) || 0.0001,
+      };
+    }
+    case "polygon": {
+      const xs = node.points.map((p) => p.x);
+      const ys = node.points.map((p) => p.y);
+      const minX = Math.min(...xs);
+      const minY = Math.min(...ys);
+      const maxX = Math.max(...xs);
+      const maxY = Math.max(...ys);
+      return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+    }
+    case "path":
+      return controlPolygonBBox(node.nodes);
+    case "text": {
+      // Approximation: no DOM measurement available in this pure-data module. Rendering itself
+      // (a real <text> element) is pixel-perfect; this only sizes selection handles/marquee hits.
+      const width = Math.max(1, node.content.length * node.fontSize * TEXT_CHAR_WIDTH_FACTOR);
+      const height = node.fontSize * 1.2;
+      const x = node.textAnchor === "start" ? 0 : node.textAnchor === "end" ? -width : -width / 2;
+      return { x, y: -node.fontSize * 0.8, width, height };
+    }
+  }
+}
+
+/** Center of the shape's local bounding box — the pivot used for rotation. */
+export function localCenter(node: SceneNode): Point {
+  const b = localBBox(node);
+  return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+}
+
+/** SVG `transform` attribute value placing the node's local geometry into scene space. */
+export function svgTransformString(node: SceneNode): string {
+  const { x, y, rotation, scaleX, scaleY } = node.transform;
+  const parts = [`translate(${x} ${y})`];
+  if (rotation !== 0) {
+    const c = localCenter(node);
+    parts.push(`rotate(${rotation} ${c.x} ${c.y})`);
+  }
+  if (scaleX !== 1 || scaleY !== 1) {
+    parts.push(`scale(${scaleX} ${scaleY})`);
+  }
+  return parts.join(" ");
+}
+
+/** Axis-aligned bounding box of the node in scene space, accounting for rotation. */
+export function worldBBox(node: SceneNode): BBox {
+  const local = localBBox(node);
+  const center = localCenter(node);
+  const { rotation, x: tx, y: ty, scaleX, scaleY } = node.transform;
+
+  const corners: Point[] = [
+    { x: local.x, y: local.y },
+    { x: local.x + local.width, y: local.y },
+    { x: local.x + local.width, y: local.y + local.height },
+    { x: local.x, y: local.y + local.height },
+  ].map((p) => ({ x: p.x * scaleX, y: p.y * scaleY }));
+
+  const scaledCenter = { x: center.x * scaleX, y: center.y * scaleY };
+  const rotated = corners.map((p) => rotatePoint(p, scaledCenter, rotation));
+  const worldPoints = rotated.map((p) => ({ x: p.x + tx, y: p.y + ty }));
+
+  const xs = worldPoints.map((p) => p.x);
+  const ys = worldPoints.map((p) => p.y);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  const maxX = Math.max(...xs);
+  const maxY = Math.max(...ys);
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+function localHandlePoint(local: BBox, handle: string): Point {
+  const cx = local.x + local.width / 2;
+  const cy = local.y + local.height / 2;
+  switch (handle) {
+    case "nw":
+      return { x: local.x, y: local.y };
+    case "n":
+      return { x: cx, y: local.y };
+    case "ne":
+      return { x: local.x + local.width, y: local.y };
+    case "e":
+      return { x: local.x + local.width, y: cy };
+    case "se":
+      return { x: local.x + local.width, y: local.y + local.height };
+    case "s":
+      return { x: cx, y: local.y + local.height };
+    case "sw":
+      return { x: local.x, y: local.y + local.height };
+    case "w":
+      return { x: local.x, y: cy };
+    default:
+      return { x: cx, y: cy };
+  }
+}
+
+/** Maps a point in the node's local coordinate space into world/user space (applies rotation then translation). */
+export function localToWorldPoint(node: SceneNode, localPoint: Point): Point {
+  const center = localCenter(node);
+  const rotated = rotatePoint(localPoint, center, node.transform.rotation);
+  return { x: rotated.x + node.transform.x, y: rotated.y + node.transform.y };
+}
+
+/** Inverse of the node's transform: maps a world/user-space point back into the node's local coordinate space. */
+export function worldToLocal(node: SceneNode, worldPoint: Point): Point {
+  const center = localCenter(node);
+  const relative = { x: worldPoint.x - node.transform.x, y: worldPoint.y - node.transform.y };
+  return rotatePoint(relative, center, -node.transform.rotation);
+}
+
+/** World position of a named resize handle, following the shape's own rotation (not the axis-aligned bbox). */
+export function worldHandlePosition(node: SceneNode, handle: string): Point {
+  return localToWorldPoint(node, localHandlePoint(localBBox(node), handle));
+}
+
+/** The 4 corners of the shape's own (possibly rotated) bounding box, for drawing a selection outline that matches the shape. */
+export function rotatedOutlineCorners(node: SceneNode): Point[] {
+  return (["nw", "ne", "se", "sw"] as const).map((h) => worldHandlePosition(node, h));
+}
+
+export function unionBBox(boxes: BBox[]): BBox | null {
+  if (boxes.length === 0) return null;
+  const minX = Math.min(...boxes.map((b) => b.x));
+  const minY = Math.min(...boxes.map((b) => b.y));
+  const maxX = Math.max(...boxes.map((b) => b.x + b.width));
+  const maxY = Math.max(...boxes.map((b) => b.y + b.height));
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+export function bboxIntersects(a: BBox, b: BBox): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+export function pointInBBox(point: Point, box: BBox): boolean {
+  return (
+    point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height
+  );
+}

@@ -1,0 +1,38 @@
+import type { Style } from "../../scene/types";
+import { useSceneStore } from "../../store/sceneStore";
+import { useSelectionStore } from "../../store/selectionStore";
+import { FillControl } from "./FillControl";
+import { FontControl } from "./FontControl";
+import { OpacityControl } from "./OpacityControl";
+import { StrokeControl } from "./StrokeControl";
+import { commitStyleChange } from "./useStyleCommit";
+
+export function PropertiesPanel() {
+  const selectedIds = useSelectionStore((s) => s.selectedIds);
+  const scene = useSceneStore((s) => s.scene);
+
+  if (selectedIds.length === 0) {
+    return (
+      <div className="panel properties-panel">
+        <h3>Propriétés</h3>
+        <p className="panel-empty">Sélectionnez une forme pour modifier ses propriétés.</p>
+      </div>
+    );
+  }
+
+  const firstNode = scene.elements[selectedIds[0]];
+  if (!firstNode) return null;
+  const style: Style = firstNode.style;
+
+  const handleChange = (patch: Partial<Style>) => commitStyleChange(selectedIds, patch);
+
+  return (
+    <div className="panel properties-panel">
+      <h3>Propriétés</h3>
+      {selectedIds.length === 1 && firstNode.type === "text" && <FontControl node={firstNode} />}
+      <FillControl style={style} onChange={handleChange} />
+      <StrokeControl style={style} onChange={handleChange} />
+      <OpacityControl style={style} onChange={handleChange} />
+    </div>
+  );
+}

@@ -1,0 +1,36 @@
+import { useState } from "react";
+import { exportPng } from "../../io/pngExport";
+import { useSceneStore } from "../../store/sceneStore";
+
+export function ExportPngDialog({ onClose }: { onClose: () => void }) {
+  const artboard = useSceneStore((s) => s.scene.artboard);
+  const [width, setWidth] = useState(artboard.width);
+  const [height, setHeight] = useState(artboard.height);
+
+  const handleExport = async () => {
+    await exportPng(width, height);
+    onClose();
+  };
+
+  return (
+    <div className="dialog-overlay" onClick={onClose}>
+      <div className="dialog" onClick={(e) => e.stopPropagation()}>
+        <h3>Exporter en PNG</h3>
+        <label>
+          Largeur (px)
+          <input type="number" min={1} value={width} onChange={(e) => setWidth(Number(e.target.value))} />
+        </label>
+        <label>
+          Hauteur (px)
+          <input type="number" min={1} value={height} onChange={(e) => setHeight(Number(e.target.value))} />
+        </label>
+        <div className="dialog-actions">
+          <button onClick={onClose}>Annuler</button>
+          <button className="primary" onClick={() => void handleExport()}>
+            Exporter
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
