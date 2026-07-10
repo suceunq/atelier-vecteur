@@ -1,4 +1,5 @@
 import { controlPolygonBBox } from "./bezier";
+import { safeNumber } from "./sanitize";
 import { rotatePoint } from "../utils/matrix";
 import type { Point, SceneNode } from "./types";
 
@@ -57,13 +58,22 @@ export function localCenter(node: SceneNode): Point {
   return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
 }
 
-/** SVG `transform` attribute value placing the node's local geometry into scene space. */
+/**
+ * SVG `transform` attribute value placing the node's local geometry into scene space.
+ * Coordinates are coerced via `safeNumber`: this string is embedded directly into the exported
+ * SVG file (and used as a live DOM attribute), and scene data can come from an unvalidated
+ * loaded project file.
+ */
 export function svgTransformString(node: SceneNode): string {
-  const { x, y, rotation, scaleX, scaleY } = node.transform;
+  const x = safeNumber(node.transform.x);
+  const y = safeNumber(node.transform.y);
+  const rotation = safeNumber(node.transform.rotation);
+  const scaleX = safeNumber(node.transform.scaleX, 1);
+  const scaleY = safeNumber(node.transform.scaleY, 1);
   const parts = [`translate(${x} ${y})`];
   if (rotation !== 0) {
     const c = localCenter(node);
-    parts.push(`rotate(${rotation} ${c.x} ${c.y})`);
+    parts.push(`rotate(${rotation} ${safeNumber(c.x)} ${safeNumber(c.y)})`);
   }
   if (scaleX !== 1 || scaleY !== 1) {
     parts.push(`scale(${scaleX} ${scaleY})`);

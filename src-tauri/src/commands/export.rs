@@ -4,14 +4,34 @@ use resvg::usvg;
 use std::fs;
 use tauri::command;
 
+/// Generous but bounded — prevents a runaway width/height (however it got there) from
+/// requesting a many-gigabyte pixmap allocation.
+const MAX_PNG_DIMENSION: u32 = 10_000;
+
+fn require_extension(path: &str, expected: &str) -> Result<(), String> {
+    if path.to_ascii_lowercase().ends_with(expected) {
+        Ok(())
+    } else {
+        Err(format!("Le fichier de destination doit avoir l'extension {expected}"))
+    }
+}
+
 #[command]
 pub fn export_svg(svg: String, path: String) -> Result<(), String> {
+    require_extension(&path, ".svg")?;
     let cleaned = clean_svg(&svg);
     fs::write(&path, cleaned).map_err(|e| e.to_string())
 }
 
 #[command]
 pub fn export_png(svg: String, path: String, width: u32, height: u32) -> Result<(), String> {
+    require_extension(&path, ".png")?;
+    if width == 0 || height == 0 || width > MAX_PNG_DIMENSION || height > MAX_PNG_DIMENSION {
+        return Err(format!(
+            "Dimensions PNG invalides (1-{MAX_PNG_DIMENSION} px attendu)"
+        ));
+    }
+
     let cleaned = clean_svg(&svg);
 
     let opt = usvg::Options::default();

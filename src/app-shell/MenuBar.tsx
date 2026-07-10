@@ -17,6 +17,30 @@ export function MenuBar() {
     useHistoryStore.getState().clear();
   };
 
+  const handleOpen = async () => {
+    try {
+      await openProject();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Impossible d'ouvrir ce fichier de projet.");
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await saveProjectAs();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Impossible d'enregistrer le projet.");
+    }
+  };
+
+  const handleExportSvg = async () => {
+    try {
+      await exportSvg();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Impossible d'exporter le SVG.");
+    }
+  };
+
   return (
     <div className="menu-bar">
       <span className="app-title">SVG Atelier</span>
@@ -27,14 +51,14 @@ export function MenuBar() {
           <button className="menu-item" onClick={handleNew}>
             Nouveau
           </button>
-          <button className="menu-item" onClick={() => void openProject()}>
+          <button className="menu-item" onClick={() => void handleOpen()}>
             Ouvrir…
           </button>
-          <button className="menu-item" onClick={() => void saveProjectAs()}>
+          <button className="menu-item" onClick={() => void handleSave()}>
             Enregistrer sous…
           </button>
           <hr />
-          <button className="menu-item" onClick={() => void exportSvg()}>
+          <button className="menu-item" onClick={() => void handleExportSvg()}>
             Exporter en SVG…
           </button>
           <button className="menu-item" onClick={() => setShowPngDialog(true)}>

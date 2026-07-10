@@ -13,6 +13,7 @@ import {
   type PolygonNode,
   type RectNode,
   type Scene,
+  type SceneNode,
   type TextNode,
 } from "./types";
 
@@ -119,6 +120,17 @@ export function createGradient(kind: "linear" | "radial", from: Point, to: Point
       { offset: 1, color: "#8b5cf6", opacity: 1 },
     ],
   };
+}
+
+/** Deep-clones a node with a fresh id (and fresh path-anchor ids), offset by (dx,dy) — used for copy/paste and duplicate. */
+export function cloneNodeWithOffset(node: SceneNode, dx: number, dy: number): SceneNode {
+  const clone: SceneNode = JSON.parse(JSON.stringify(node));
+  clone.id = createId();
+  clone.transform = { ...clone.transform, x: clone.transform.x + dx, y: clone.transform.y + dy };
+  if (clone.type === "path") {
+    clone.nodes = clone.nodes.map((anchor) => ({ ...anchor, id: createId() }));
+  }
+  return clone;
 }
 
 export function createLayer(name: string): Layer {

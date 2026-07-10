@@ -8,8 +8,12 @@ export function ExportPngDialog({ onClose }: { onClose: () => void }) {
   const [height, setHeight] = useState(artboard.height);
 
   const handleExport = async () => {
-    await exportPng(width, height);
-    onClose();
+    try {
+      await exportPng(width, height);
+      onClose();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Impossible d'exporter le PNG.");
+    }
   };
 
   return (

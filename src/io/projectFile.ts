@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import type { Scene } from "../scene/types";
+import { isPlausibleScene } from "../scene/validate";
 import { useSceneStore } from "../store/sceneStore";
 
 const FILE_FILTERS = [{ name: "Projet SVG Atelier", extensions: ["svgatelier"] }];
@@ -16,10 +16,13 @@ export async function saveProjectAs(): Promise<string | null> {
 export async function openProject(): Promise<string | null> {
   const path = await open({ filters: FILE_FILTERS, multiple: false });
   if (!path || Array.isArray(path)) return null;
-  const result = await invoke<{ manifest: { format_version: number; app_version: string }; scene: Scene }>(
+  const result = await invoke<{ manifest: { format_version: number; app_version: string }; scene: unknown }>(
     "load_project",
     { path }
   );
+  if (!isPlausibleScene(result.scene)) {
+    throw new Error("Fichier de projet invalide ou corrompu.");
+  }
   useSceneStore.getState().replaceScene(result.scene);
   return path;
 }

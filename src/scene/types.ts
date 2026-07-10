@@ -106,23 +106,29 @@ export function gradientRef(id: GradientId): string {
   return `gradient:${id}`;
 }
 
-export function isGradientRef(value: string): boolean {
-  return value.startsWith("gradient:");
+export function isGradientRef(value: unknown): value is string {
+  return typeof value === "string" && value.startsWith("gradient:");
 }
 
 export function gradientIdFromRef(value: string): GradientId {
   return value.slice("gradient:".length);
 }
 
-/** DOM id used for the `<linearGradient>`/`<radialGradient>` element — prefixed to avoid colliding with element ids. */
+/** DOM id used for the `<linearGradient>`/`<radialGradient>` element — prefixed to avoid colliding with element ids. Restricted to a safe charset: `id` may originate from an unvalidated loaded project file. */
 export function gradientElementId(id: GradientId): string {
-  return `grad-${id}`;
+  const safe = String(id).replace(/[^A-Za-z0-9_-]/g, "");
+  return `grad-${safe}`;
 }
 
-/** Resolves a fill/stroke value for actual SVG output — a gradient ref becomes `url(#...)`, anything else passes through. Used identically by the live renderer and the export serializer so they can never drift apart. */
-export function resolvePaint(value: string): string {
+/**
+ * Resolves a fill/stroke value for actual SVG output — a gradient ref becomes `url(#...)`,
+ * anything else passes through as a plain color string. Used identically by the live renderer
+ * and the export serializer so they can never drift apart. Defensive against non-string input
+ * (an unvalidated loaded project file could set this to anything).
+ */
+export function resolvePaint(value: unknown): string {
   if (isGradientRef(value)) return `url(#${gradientElementId(gradientIdFromRef(value))})`;
-  return value;
+  return typeof value === "string" ? value : "none";
 }
 
 export interface Layer {

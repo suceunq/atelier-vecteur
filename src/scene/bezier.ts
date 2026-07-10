@@ -1,4 +1,9 @@
+import { safeNumber } from "./sanitize";
 import type { PathAnchor, PathNode, Point } from "./types";
+
+function n(value: number): number {
+  return safeNumber(value);
+}
 
 export function cubicPoint(p0: Point, p1: Point, p2: Point, p3: Point, t: number): Point {
   const mt = 1 - t;
@@ -74,17 +79,21 @@ export function pathSegments(node: PathNode): PathSegment[] {
   return segments;
 }
 
-/** Derives the SVG `d` attribute from the structured anchor/handle model — never stored directly. */
+/**
+ * Derives the SVG `d` attribute from the structured anchor/handle model — never stored directly.
+ * Coordinates go through `safeNumber`: this string is embedded directly into the exported SVG
+ * file (and used as a live DOM attribute), and a loaded project file is unvalidated JSON.
+ */
 export function pathToD(node: PathNode): string {
   if (node.nodes.length === 0) return "";
   const start = node.nodes[0].anchor;
-  const parts = [`M ${start.x} ${start.y}`];
+  const parts = [`M ${n(start.x)} ${n(start.y)}`];
 
   for (const seg of pathSegments(node)) {
     if (seg.isLine) {
-      parts.push(`L ${seg.p3.x} ${seg.p3.y}`);
+      parts.push(`L ${n(seg.p3.x)} ${n(seg.p3.y)}`);
     } else {
-      parts.push(`C ${seg.p1.x} ${seg.p1.y} ${seg.p2.x} ${seg.p2.y} ${seg.p3.x} ${seg.p3.y}`);
+      parts.push(`C ${n(seg.p1.x)} ${n(seg.p1.y)} ${n(seg.p2.x)} ${n(seg.p2.y)} ${n(seg.p3.x)} ${n(seg.p3.y)}`);
     }
   }
   if (node.closed) parts.push("Z");
