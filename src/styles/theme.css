@@ -419,6 +419,48 @@ body,
   overflow-y: auto;
 }
 
+.about-dialog {
+  width: 440px;
+  max-width: calc(100vw - 48px);
+}
+
+.about-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.about-header p,
+.about-dialog section p {
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 4px 0 0;
+}
+
+.about-close {
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.about-dialog section h4 {
+  margin: 0 0 6px;
+}
+
+.about-dialog footer {
+  color: var(--color-muted);
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+  font-size: 12px;
+}
+
 .update-notes {
   white-space: pre-wrap;
   font-family: inherit;

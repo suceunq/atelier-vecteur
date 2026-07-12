@@ -12,6 +12,7 @@ import { useSelectionStore } from "../store/selectionStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useViewportStore } from "../store/viewportStore";
 import { UpdateDialog } from "./UpdateDialog";
+import { AboutDialog } from "./AboutDialog";
 
 // Menus are native <details>/<summary> elements, which don't close themselves when an
 // item inside is clicked. Closing the nearest ancestor <details> on any click inside the
@@ -25,6 +26,7 @@ export function MenuBar() {
   const [showPngDialog, setShowPngDialog] = useState(false);
   const [showImageImportDialog, setShowImageImportDialog] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
+  const [showAboutDialog, setShowAboutDialog] = useState(false);
   const theme = useSettingsStore((s) => s.theme);
 
   // Silent check on launch: an update found here opens the same dialog as the manual menu
@@ -154,12 +156,17 @@ export function MenuBar() {
           <button className="menu-item" onClick={() => void handleCheckForUpdates()}>
             Vérifier les mises à jour…
           </button>
+          <hr />
+          <button className="menu-item" onClick={() => setShowAboutDialog(true)}>
+            À propos d’Atelier Vecteur
+          </button>
         </div>
       </details>
 
       {showPngDialog && <ExportPngDialog onClose={() => setShowPngDialog(false)} />}
       {showImageImportDialog && <ImageImportDialog onClose={() => setShowImageImportDialog(false)} />}
       {pendingUpdate && <UpdateDialog update={pendingUpdate} onClose={() => setPendingUpdate(null)} />}
+      {showAboutDialog && <AboutDialog onClose={() => setShowAboutDialog(false)} />}
     </div>
   );
 }
