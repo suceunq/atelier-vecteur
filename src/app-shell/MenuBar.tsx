@@ -80,7 +80,7 @@ export function MenuBar() {
     <div className="menu-bar">
       <span className="app-title">Atelier Vecteur</span>
 
-      <details className="menu">
+      <details className="menu" name="app-menu">
         <summary>Fichier</summary>
         <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={handleNew}>
@@ -106,7 +106,7 @@ export function MenuBar() {
         </div>
       </details>
 
-      <details className="menu">
+      <details className="menu" name="app-menu">
         <summary>Édition</summary>
         <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={() => useHistoryStore.getState().undo()}>
@@ -118,7 +118,7 @@ export function MenuBar() {
         </div>
       </details>
 
-      <details className="menu">
+      <details className="menu" name="app-menu">
         <summary>Affichage</summary>
         <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={() => useViewportStore.getState().toggleGrid()}>
@@ -137,7 +137,7 @@ export function MenuBar() {
         </div>
       </details>
 
-      <details className="menu">
+      <details className="menu" name="app-menu">
         <summary>Aide</summary>
         <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={() => void handleCheckForUpdates()}>
