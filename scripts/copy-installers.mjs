@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const nsisDir = join(repoRoot, "src-tauri", "target", "release", "bundle", "nsis");
 const destDir = join(repoRoot, "logiciel-fini");
-const destName = "Installer Atelier Vecteur.exe";
+const destName = "Atelier Vecteur.exe";
 
 if (!existsSync(nsisDir)) {
   console.error("Aucun installateur trouvé — as-tu lancé `npm run tauri build` ?");
