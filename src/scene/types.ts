@@ -19,6 +19,8 @@ export interface Style {
   opacity: number;
   /** References a Filter in Scene.filters (`"filter:<id>"`), or null for no filter. */
   filter: string | null;
+  /** Almost always "nonzero" — "evenodd" is only needed for traced paths whose holes are encoded as nested subpaths rather than separate stacked shapes. */
+  fillRule: "nonzero" | "evenodd";
 }
 
 interface BaseNode {
@@ -102,6 +104,14 @@ export interface GroupNode extends BaseNode {
   bounds: { x: number; y: number; width: number; height: number };
 }
 
+export interface ImageNode extends BaseNode {
+  type: "image";
+  /** `data:image/<png|jpeg|jpg|gif|webp>;base64,<...>` — validated via `sanitizeImageHref` before render/export. */
+  href: string;
+  width: number;
+  height: number;
+}
+
 export type SceneNode =
   | RectNode
   | EllipseNode
@@ -109,7 +119,8 @@ export type SceneNode =
   | PolygonNode
   | PathNode
   | TextNode
-  | GroupNode;
+  | GroupNode
+  | ImageNode;
 
 export interface GradientStop {
   offset: number;
@@ -264,6 +275,7 @@ export const defaultStyle: Style = {
   strokeDasharray: null,
   opacity: 1,
   filter: null,
+  fillRule: "nonzero",
 };
 
 export const defaultTransform: Transform = {

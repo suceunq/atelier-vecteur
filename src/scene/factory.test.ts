@@ -27,6 +27,7 @@ describe("cloneNodeWithOffset", () => {
         strokeDasharray: null,
         opacity: 1,
         filter: null,
+        fillRule: "nonzero" as const,
       },
       subpaths: [
         {

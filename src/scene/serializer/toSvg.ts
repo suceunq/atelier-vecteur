@@ -1,5 +1,6 @@
 import { pathToD } from "../bezier";
 import { svgTransformString } from "../geometry";
+import { sanitizeImageHref } from "../imageHref";
 import { safeNumber } from "../sanitize";
 import { resolveFilterRef, resolvePaint, type ArtboardId, type Scene, type SceneNode, type Style } from "../types";
 import { filtersToDefs } from "./filterDefs";
@@ -41,6 +42,9 @@ function styleAttrs(style: Style): string {
   if (filterAttr) {
     attrs.push(`filter="${escapeAttr(filterAttr)}"`);
   }
+  if (style.fillRule === "evenodd") {
+    attrs.push(`fill-rule="evenodd"`);
+  }
   return attrs.join(" ");
 }
 
@@ -75,6 +79,15 @@ function nodeToSvg(node: SceneNode, scene: Scene): string {
         .map((child) => nodeToSvg(child, scene))
         .join("");
       return `<g transform="${transform}">${children}</g>`;
+    }
+    case "image": {
+      const href = escapeAttr(sanitizeImageHref(node.href));
+      const width = safeNumber(node.width);
+      const height = safeNumber(node.height);
+      const filterAttr = resolveFilterRef(node.style.filter);
+      const filterPart = filterAttr ? ` filter="${escapeAttr(filterAttr)}"` : "";
+      const opacityPart = node.style.opacity !== 1 ? ` opacity="${safeNumber(node.style.opacity, 1)}"` : "";
+      return `<image href="${href}" width="${width}" height="${height}" transform="${transform}" preserveAspectRatio="none"${filterPart}${opacityPart}/>`;
     }
   }
 }

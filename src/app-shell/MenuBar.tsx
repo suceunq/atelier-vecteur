@@ -3,6 +3,7 @@ import { exportSvg } from "../io/svgExport";
 import { openProject, saveProjectAs } from "../io/projectFile";
 import { checkForUpdates, installUpdateAndRelaunch } from "../io/updater";
 import { ExportPngDialog } from "../panels/ExportPanel/ExportPngDialog";
+import { ImageImportDialog } from "../panels/ImagePanel/ImageImportDialog";
 import { createEmptyScene } from "../scene/factory";
 import { useHistoryStore } from "../store/historyStore";
 import { useSceneStore } from "../store/sceneStore";
@@ -11,6 +12,7 @@ import { useViewportStore } from "../store/viewportStore";
 
 export function MenuBar() {
   const [showPngDialog, setShowPngDialog] = useState(false);
+  const [showImageImportDialog, setShowImageImportDialog] = useState(false);
 
   const handleNew = () => {
     useSceneStore.getState().replaceScene(createEmptyScene());
@@ -66,7 +68,7 @@ export function MenuBar() {
 
   return (
     <div className="menu-bar">
-      <span className="app-title">SVG Atelier</span>
+      <span className="app-title">Atelier Vecteur</span>
 
       <details className="menu">
         <summary>Fichier</summary>
@@ -79,6 +81,10 @@ export function MenuBar() {
           </button>
           <button className="menu-item" onClick={() => void handleSave()}>
             Enregistrer sous…
+          </button>
+          <hr />
+          <button className="menu-item" onClick={() => setShowImageImportDialog(true)}>
+            Importer une image…
           </button>
           <hr />
           <button className="menu-item" onClick={() => void handleExportSvg()}>
@@ -124,6 +130,7 @@ export function MenuBar() {
       </details>
 
       {showPngDialog && <ExportPngDialog onClose={() => setShowPngDialog(false)} />}
+      {showImageImportDialog && <ImageImportDialog onClose={() => setShowImageImportDialog(false)} />}
     </div>
   );
 }

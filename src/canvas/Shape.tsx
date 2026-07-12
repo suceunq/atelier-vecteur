@@ -1,6 +1,7 @@
 import type { SVGAttributes } from "react";
 import { pathToD } from "../scene/bezier";
 import { svgTransformString } from "../scene/geometry";
+import { sanitizeImageHref } from "../scene/imageHref";
 import { resolveFilterRef, resolvePaint, type SceneNode, type Style } from "../scene/types";
 import { useSceneStore } from "../store/sceneStore";
 
@@ -14,6 +15,7 @@ function styleProps(style: Style): SVGAttributes<SVGElement> {
     strokeDasharray: style.strokeDasharray ?? undefined,
     opacity: style.opacity,
     filter: resolveFilterRef(style.filter),
+    fillRule: style.fillRule === "evenodd" ? "evenodd" : undefined,
   };
 }
 
@@ -80,6 +82,19 @@ export function Shape({ node, interactive }: ShapeProps) {
             return child ? <Shape key={childId} node={child} interactive={interactive} /> : null;
           })}
         </g>
+      );
+    case "image":
+      return (
+        <image
+          href={sanitizeImageHref(node.href)}
+          width={node.width}
+          height={node.height}
+          transform={transform}
+          preserveAspectRatio="none"
+          opacity={node.style.opacity}
+          filter={resolveFilterRef(node.style.filter)}
+          {...dataProps}
+        />
       );
   }
 }

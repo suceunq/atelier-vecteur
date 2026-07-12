@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "svg-atelier",
+  "productName": "Atelier Vecteur",
   "version": "0.1.0",
   "identifier": "com.calib.svg-atelier",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "SVG Atelier",
+        "title": "Atelier Vecteur",
         "width": 1400,
         "height": 900,
         "minWidth": 900,
@@ -37,7 +37,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERFMzMyQ0EzNzJEQzU2RDgKUldUWVZ0eHlveXd6M29FMk5yMUFLZytZaTV4dDFjYUhCQktDTjhGemU5c3F2Z21ZQ040OWo4dGIK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDU0NjIxRjRDQzNBMTdFMjkKUldRcGZxSERUQjlpVk41a1d3ZGUzSko5NEVTblBPV2pLM1JoTXNnU250S2paQURjQmZXWXNGRzMK",
       "endpoints": [
         "https://github.com/REMPLACE_PAR_TON_COMPTE/REMPLACE_PAR_TON_DEPOT/releases/latest/download/latest.json"
       ]

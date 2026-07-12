@@ -15,6 +15,8 @@ pub fn run() {
             commands::export::export_svg,
             commands::export::export_png,
             commands::fonts::text_to_path,
+            commands::images::import_image,
+            commands::images::trace_image,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

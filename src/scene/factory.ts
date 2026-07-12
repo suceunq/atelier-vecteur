@@ -8,6 +8,7 @@ import {
   type FilterKind,
   type Gradient,
   type GroupNode,
+  type ImageNode,
   type Layer,
   type LineNode,
   type Pattern,
@@ -183,6 +184,24 @@ export function cloneNodeWithOffset(node: SceneNode, dx: number, dy: number): Sc
     }));
   }
   return clone;
+}
+
+export function createImage(
+  originX: number,
+  originY: number,
+  href: string,
+  width: number,
+  height: number
+): ImageNode {
+  return {
+    id: createId(),
+    type: "image",
+    transform: { ...defaultTransform, x: originX, y: originY },
+    style: { ...defaultStyle, fill: "none", stroke: "none" },
+    href,
+    width,
+    height,
+  };
 }
 
 export function createLayer(name: string): Layer {
