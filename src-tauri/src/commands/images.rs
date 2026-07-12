@@ -95,7 +95,7 @@ const MAX_TRACE_DIM: u32 = 1500;
 /// controls trace *time*; it does nothing for path *count* on a busy/noisy photo, so the app
 /// would still lock up turning 20 000 paths into scene nodes and DOM elements. Reject past this
 /// point with an actionable message rather than silently handing the frontend an unusable result.
-const MAX_TRACE_PATHS: usize = 3000;
+const MAX_TRACE_PATHS: usize = 20_000;
 
 /// Traces a picked raster image into an SVG string (one `<path>` per color region) via `vtracer`.
 /// The caller parses that SVG's `<path>` elements into editable `PathNode`s.
