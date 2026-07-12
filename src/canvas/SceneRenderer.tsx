@@ -1,4 +1,6 @@
+import { filtersToDefs } from "../scene/serializer/filterDefs";
 import { gradientsToDefs } from "../scene/serializer/gradientDefs";
+import { patternsToDefs } from "../scene/serializer/patternDefs";
 import { useDraftStore } from "../store/draftStore";
 import { useSceneStore } from "../store/sceneStore";
 import { Shape } from "./Shape";
@@ -8,20 +10,28 @@ export function SceneRenderer() {
   const scene = useSceneStore((s) => s.scene);
   const draftNode = useDraftStore((s) => s.draftNode);
 
+  const defs =
+    gradientsToDefs(scene.gradients) + patternsToDefs(scene.patterns) + filtersToDefs(scene.filters);
+
   return (
     <>
-      {Object.keys(scene.gradients).length > 0 && (
-        <defs dangerouslySetInnerHTML={{ __html: gradientsToDefs(scene.gradients) }} />
-      )}
-      <rect
-        x={0}
-        y={0}
-        width={scene.artboard.width}
-        height={scene.artboard.height}
-        fill="white"
-        stroke="#94a3b8"
-        strokeWidth={1}
-      />
+      {defs && <defs dangerouslySetInnerHTML={{ __html: defs }} />}
+      {scene.artboards.map((artboard) => (
+        <g key={artboard.id}>
+          <text x={artboard.x} y={artboard.y - 6} fontSize={11} fill="#64748b">
+            {artboard.name}
+          </text>
+          <rect
+            x={artboard.x}
+            y={artboard.y}
+            width={artboard.width}
+            height={artboard.height}
+            fill="white"
+            stroke="#94a3b8"
+            strokeWidth={1}
+          />
+        </g>
+      ))}
       {scene.layers
         .filter((layer) => layer.visible)
         .map((layer) => (

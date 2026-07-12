@@ -1,5 +1,5 @@
 import { safeNumber } from "./sanitize";
-import type { PathAnchor, PathNode, Point } from "./types";
+import type { PathNode, PathSubpath, Point } from "./types";
 
 function n(value: number): number {
   return safeNumber(value);
@@ -56,13 +56,15 @@ export interface PathSegment {
   p2: Point;
   p3: Point;
   isLine: boolean;
-  /** Index of the segment's starting anchor in `node.nodes`. */
+  /** Which subpath (in `node.subpaths`) this segment belongs to. */
+  subpathIndex: number;
+  /** Index of the segment's starting anchor within that subpath's `nodes`. */
   startIndex: number;
 }
 
-/** Resolves each anchor pair into absolute (local-space) cubic control points. Straight segments use collapsed control points. */
-export function pathSegments(node: PathNode): PathSegment[] {
-  const { nodes, closed } = node;
+/** Resolves one subpath's anchor pairs into absolute (local-space) cubic control points. */
+function subpathSegments(subpath: PathSubpath, subpathIndex: number): PathSegment[] {
+  const { nodes, closed } = subpath;
   const segments: PathSegment[] = [];
   const count = nodes.length;
   const last = closed ? count : count - 1;
@@ -74,46 +76,68 @@ export function pathSegments(node: PathNode): PathSegment[] {
     const p3 = b.anchor;
     const p1 = a.handleOut ? { x: p0.x + a.handleOut.x, y: p0.y + a.handleOut.y } : p0;
     const p2 = b.handleIn ? { x: p3.x + b.handleIn.x, y: p3.y + b.handleIn.y } : p3;
-    segments.push({ p0, p1, p2, p3, isLine: !a.handleOut && !b.handleIn, startIndex: i });
+    segments.push({ p0, p1, p2, p3, isLine: !a.handleOut && !b.handleIn, subpathIndex, startIndex: i });
   }
   return segments;
 }
 
-/**
- * Derives the SVG `d` attribute from the structured anchor/handle model — never stored directly.
- * Coordinates go through `safeNumber`: this string is embedded directly into the exported SVG
- * file (and used as a live DOM attribute), and a loaded project file is unvalidated JSON.
- */
-export function pathToD(node: PathNode): string {
-  if (node.nodes.length === 0) return "";
-  const start = node.nodes[0].anchor;
-  const parts = [`M ${n(start.x)} ${n(start.y)}`];
-
-  for (const seg of pathSegments(node)) {
-    if (seg.isLine) {
-      parts.push(`L ${n(seg.p3.x)} ${n(seg.p3.y)}`);
-    } else {
-      parts.push(`C ${n(seg.p1.x)} ${n(seg.p1.y)} ${n(seg.p2.x)} ${n(seg.p2.y)} ${n(seg.p3.x)} ${n(seg.p3.y)}`);
-    }
-  }
-  if (node.closed) parts.push("Z");
-  return parts.join(" ");
+/** All segments across every subpath of the path, each tagged with its subpath index. */
+export function pathSegments(node: PathNode): PathSegment[] {
+  return node.subpaths.flatMap((subpath, i) => subpathSegments(subpath, i));
 }
 
-/** Bounding box of the anchor+handle control polygon — a safe superset of the curve's true bounds. */
-export function controlPolygonBBox(nodes: PathAnchor[]): { x: number; y: number; width: number; height: number } {
+/**
+ * Derives the SVG `d` attribute from the structured subpath/anchor/handle model — never stored
+ * directly. Coordinates go through `safeNumber`: this string is embedded directly into the
+ * exported SVG file (and used as a live DOM attribute), and a loaded project file is unvalidated
+ * JSON. Each subpath becomes its own `M ... Z` (or open `M ...`) block.
+ */
+export function pathToD(node: PathNode): string {
+  const blocks: string[] = [];
+
+  for (let subpathIndex = 0; subpathIndex < node.subpaths.length; subpathIndex++) {
+    const subpath = node.subpaths[subpathIndex];
+    if (subpath.nodes.length === 0) continue;
+    const start = subpath.nodes[0].anchor;
+    const parts = [`M ${n(start.x)} ${n(start.y)}`];
+
+    for (const seg of subpathSegments(subpath, subpathIndex)) {
+      if (seg.isLine) {
+        parts.push(`L ${n(seg.p3.x)} ${n(seg.p3.y)}`);
+      } else {
+        parts.push(
+          `C ${n(seg.p1.x)} ${n(seg.p1.y)} ${n(seg.p2.x)} ${n(seg.p2.y)} ${n(seg.p3.x)} ${n(seg.p3.y)}`
+        );
+      }
+    }
+    if (subpath.closed) parts.push("Z");
+    blocks.push(parts.join(" "));
+  }
+
+  return blocks.join(" ");
+}
+
+/** Bounding box of the anchor+handle control polygon across all subpaths — a safe superset of the curve's true bounds. */
+export function controlPolygonBBox(subpaths: PathSubpath[]): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} {
   const xs: number[] = [];
   const ys: number[] = [];
-  for (const n of nodes) {
-    xs.push(n.anchor.x);
-    ys.push(n.anchor.y);
-    if (n.handleIn) {
-      xs.push(n.anchor.x + n.handleIn.x);
-      ys.push(n.anchor.y + n.handleIn.y);
-    }
-    if (n.handleOut) {
-      xs.push(n.anchor.x + n.handleOut.x);
-      ys.push(n.anchor.y + n.handleOut.y);
+  for (const subpath of subpaths) {
+    for (const anchor of subpath.nodes) {
+      xs.push(anchor.anchor.x);
+      ys.push(anchor.anchor.y);
+      if (anchor.handleIn) {
+        xs.push(anchor.anchor.x + anchor.handleIn.x);
+        ys.push(anchor.anchor.y + anchor.handleIn.y);
+      }
+      if (anchor.handleOut) {
+        xs.push(anchor.anchor.x + anchor.handleOut.x);
+        ys.push(anchor.anchor.y + anchor.handleOut.y);
+      }
     }
   }
   if (xs.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
@@ -124,12 +148,13 @@ export function controlPolygonBBox(nodes: PathAnchor[]): { x: number; y: number;
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }
 
-/** Nearest point on the path to `target`, for double-click segment-insertion in the node-edit tool. */
+/** Nearest point on the path (across all subpaths) to `target`, for double-click segment-insertion in the node-edit tool. */
 export function closestPointOnPath(
   node: PathNode,
   target: Point
-): { point: Point; segmentIndex: number; t: number; distance: number } | null {
-  let best: { point: Point; segmentIndex: number; t: number; distance: number } | null = null;
+): { point: Point; subpathIndex: number; segmentIndex: number; t: number; distance: number } | null {
+  let best: { point: Point; subpathIndex: number; segmentIndex: number; t: number; distance: number } | null =
+    null;
 
   for (const seg of pathSegments(node)) {
     const samples = 24;
@@ -138,7 +163,7 @@ export function closestPointOnPath(
       const p = cubicPoint(seg.p0, seg.p1, seg.p2, seg.p3, t);
       const distance = Math.hypot(p.x - target.x, p.y - target.y);
       if (!best || distance < best.distance) {
-        best = { point: p, segmentIndex: seg.startIndex, t, distance };
+        best = { point: p, subpathIndex: seg.subpathIndex, segmentIndex: seg.startIndex, t, distance };
       }
     }
   }

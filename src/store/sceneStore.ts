@@ -2,11 +2,17 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { createEmptyScene, createLayer } from "../scene/factory";
 import type {
+  Artboard,
+  ArtboardId,
   ElementId,
+  Filter,
+  FilterId,
   Gradient,
   GradientId,
   Layer,
   LayerId,
+  Pattern,
+  PatternId,
   Scene,
   SceneNode,
   Style,
@@ -16,6 +22,8 @@ import type {
 interface SceneState {
   scene: Scene;
   addElement: (node: SceneNode, layerId?: LayerId) => void;
+  /** Restores a node into scene.elements without listing it in any layer — used to bring back a group's children (referenced only via the group's childIds) when undoing a delete. */
+  addElementOnly: (node: SceneNode) => void;
   removeElement: (id: ElementId) => void;
   updateElementTransform: (id: ElementId, transform: Partial<Transform>) => void;
   updateElementStyle: (id: ElementId, style: Partial<Style>) => void;
@@ -23,6 +31,12 @@ interface SceneState {
   addGradient: (gradient: Gradient) => void;
   updateGradient: (id: GradientId, patch: Partial<Gradient>) => void;
   removeGradient: (id: GradientId) => void;
+  addPattern: (pattern: Pattern) => void;
+  updatePattern: (id: PatternId, patch: Partial<Pattern>) => void;
+  removePattern: (id: PatternId) => void;
+  addFilter: (filter: Filter) => void;
+  updateFilter: (id: FilterId, patch: Partial<Filter>) => void;
+  removeFilter: (id: FilterId) => void;
   addLayer: (name?: string) => Layer;
   removeLayer: (id: LayerId) => void;
   renameLayer: (id: LayerId, name: string) => void;
@@ -30,13 +44,27 @@ interface SceneState {
   toggleLayerLock: (id: LayerId) => void;
   reorderLayer: (id: LayerId, toIndex: number) => void;
   reorderElement: (layerId: LayerId, elementId: ElementId, toIndex: number) => void;
+  /** Removes an id from a layer's top-level list without deleting the element itself — used when an element becomes a group's child. */
+  removeElementIdFromLayer: (layerId: LayerId, elementId: ElementId) => void;
+  /** Inserts an existing element's id back into a layer's top-level list (optionally at a specific index) — the ungroup counterpart of removeElementIdFromLayer. */
+  insertElementIdInLayer: (layerId: LayerId, elementId: ElementId, index?: number) => void;
   findLayerOfElement: (id: ElementId) => LayerId | null;
+  /** If `id` is a child of some group, returns that group's id (one level only); otherwise returns `id` unchanged. */
+  findTopLevelId: (id: ElementId) => ElementId;
+  addArtboard: (artboard: Artboard) => void;
+  removeArtboard: (id: ArtboardId) => void;
+  updateArtboard: (id: ArtboardId, patch: Partial<Artboard>) => void;
   replaceScene: (scene: Scene) => void;
 }
 
 export const useSceneStore = create<SceneState>()(
   immer((set, get) => ({
     scene: createEmptyScene(),
+
+    addElementOnly: (node) =>
+      set((state) => {
+        state.scene.elements[node.id] = node;
+      }),
 
     addElement: (node, layerId) =>
       set((state) => {
@@ -86,6 +114,55 @@ export const useSceneStore = create<SceneState>()(
     removeGradient: (id) =>
       set((state) => {
         delete state.scene.gradients[id];
+      }),
+
+    addPattern: (pattern) =>
+      set((state) => {
+        state.scene.patterns[pattern.id] = pattern;
+      }),
+
+    updatePattern: (id, patch) =>
+      set((state) => {
+        const pattern = state.scene.patterns[id];
+        if (pattern) Object.assign(pattern, patch);
+      }),
+
+    removePattern: (id) =>
+      set((state) => {
+        delete state.scene.patterns[id];
+      }),
+
+    addFilter: (filter) =>
+      set((state) => {
+        state.scene.filters[filter.id] = filter;
+      }),
+
+    updateFilter: (id, patch) =>
+      set((state) => {
+        const filter = state.scene.filters[id];
+        if (filter) Object.assign(filter, patch);
+      }),
+
+    removeFilter: (id) =>
+      set((state) => {
+        delete state.scene.filters[id];
+      }),
+
+    addArtboard: (artboard) =>
+      set((state) => {
+        state.scene.artboards.push(artboard);
+      }),
+
+    removeArtboard: (id) =>
+      set((state) => {
+        if (state.scene.artboards.length <= 1) return;
+        state.scene.artboards = state.scene.artboards.filter((a) => a.id !== id);
+      }),
+
+    updateArtboard: (id, patch) =>
+      set((state) => {
+        const artboard = state.scene.artboards.find((a) => a.id === id);
+        if (artboard) Object.assign(artboard, patch);
       }),
 
     addLayer: (name) => {
@@ -141,9 +218,34 @@ export const useSceneStore = create<SceneState>()(
         layer.elementIds.splice(toIndex, 0, elementId);
       }),
 
+    removeElementIdFromLayer: (layerId, elementId) =>
+      set((state) => {
+        const layer = state.scene.layers.find((l) => l.id === layerId);
+        if (layer) layer.elementIds = layer.elementIds.filter((id) => id !== elementId);
+      }),
+
+    insertElementIdInLayer: (layerId, elementId, index) =>
+      set((state) => {
+        const layer = state.scene.layers.find((l) => l.id === layerId);
+        if (!layer) return;
+        if (index === undefined || index >= layer.elementIds.length) {
+          layer.elementIds.push(elementId);
+        } else {
+          layer.elementIds.splice(index, 0, elementId);
+        }
+      }),
+
     findLayerOfElement: (id) => {
       const layer = get().scene.layers.find((l) => l.elementIds.includes(id));
       return layer ? layer.id : null;
+    },
+
+    findTopLevelId: (id) => {
+      const { elements } = get().scene;
+      for (const el of Object.values(elements)) {
+        if (el.type === "group" && el.childIds.includes(id)) return el.id;
+      }
+      return id;
     },
 
     replaceScene: (scene) =>

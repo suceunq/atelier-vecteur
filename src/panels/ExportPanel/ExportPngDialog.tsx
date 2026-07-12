@@ -3,9 +3,9 @@ import { exportPng } from "../../io/pngExport";
 import { useSceneStore } from "../../store/sceneStore";
 
 export function ExportPngDialog({ onClose }: { onClose: () => void }) {
-  const artboard = useSceneStore((s) => s.scene.artboard);
-  const [width, setWidth] = useState(artboard.width);
-  const [height, setHeight] = useState(artboard.height);
+  const artboard = useSceneStore((s) => s.scene.artboards[0]);
+  const [width, setWidth] = useState(artboard?.width ?? 800);
+  const [height, setHeight] = useState(artboard?.height ?? 600);
 
   const handleExport = async () => {
     try {

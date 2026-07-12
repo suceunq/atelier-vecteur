@@ -13,7 +13,7 @@ describe("cloneNodeWithOffset", () => {
     expect(original.transform.y).toBe(20);
   });
 
-  it("regenerates path anchor ids so they don't collide with the source path's anchors", () => {
+  it("regenerates path anchor ids (across every subpath) so they don't collide with the source path's anchors", () => {
     const path = {
       id: "p1",
       type: "path" as const,
@@ -26,19 +26,31 @@ describe("cloneNodeWithOffset", () => {
         strokeOpacity: 1,
         strokeDasharray: null,
         opacity: 1,
+        filter: null,
       },
-      nodes: [
-        { id: "a1", anchor: { x: 0, y: 0 }, handleIn: null, handleOut: null, type: "corner" as const },
-        { id: "a2", anchor: { x: 10, y: 0 }, handleIn: null, handleOut: null, type: "corner" as const },
+      subpaths: [
+        {
+          nodes: [
+            { id: "a1", anchor: { x: 0, y: 0 }, handleIn: null, handleOut: null, type: "corner" as const },
+            { id: "a2", anchor: { x: 10, y: 0 }, handleIn: null, handleOut: null, type: "corner" as const },
+          ],
+          closed: false,
+        },
+        {
+          nodes: [
+            { id: "b1", anchor: { x: 5, y: 5 }, handleIn: null, handleOut: null, type: "corner" as const },
+          ],
+          closed: false,
+        },
       ],
-      closed: false,
     };
 
     const clone = cloneNodeWithOffset(path, 0, 0);
     expect(clone.type).toBe("path");
     if (clone.type === "path") {
-      expect(clone.nodes[0].id).not.toBe("a1");
-      expect(clone.nodes[1].id).not.toBe("a2");
+      expect(clone.subpaths[0].nodes[0].id).not.toBe("a1");
+      expect(clone.subpaths[0].nodes[1].id).not.toBe("a2");
+      expect(clone.subpaths[1].nodes[0].id).not.toBe("b1");
     }
   });
 });

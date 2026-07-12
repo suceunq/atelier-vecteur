@@ -62,8 +62,7 @@ function makePath(nodes: PathAnchor[], closed = false): PathNode {
     type: "path",
     transform: { ...defaultTransform },
     style: { ...defaultStyle },
-    nodes,
-    closed,
+    subpaths: [{ nodes, closed }],
   };
 }
 
@@ -82,6 +81,21 @@ describe("pathSegments", () => {
     const path = makePath([makeAnchor(0, 0), makeAnchor(10, 0)], false);
     expect(pathSegments(path)[0].isLine).toBe(true);
   });
+
+  it("tags each segment with its subpath index across multiple subpaths", () => {
+    const path: PathNode = {
+      id: "path-3",
+      type: "path",
+      transform: { ...defaultTransform },
+      style: { ...defaultStyle },
+      subpaths: [
+        { nodes: [makeAnchor(0, 0), makeAnchor(10, 0)], closed: false },
+        { nodes: [makeAnchor(5, 5), makeAnchor(15, 5)], closed: false },
+      ],
+    };
+    const segments = pathSegments(path);
+    expect(segments.map((s) => s.subpathIndex)).toEqual([0, 1]);
+  });
 });
 
 describe("pathToD", () => {
@@ -98,5 +112,20 @@ describe("pathToD", () => {
     const b = makeAnchor(10, 0);
     const path = makePath([a, b], false);
     expect(pathToD(path)).toBe("M 0 0 C 5 0 10 0 10 0");
+  });
+
+  it("emits one M...Z block per subpath — the shape needed for a letter with a hole (e.g. 'o')", () => {
+    const path: PathNode = {
+      id: "path-2",
+      type: "path",
+      transform: { ...defaultTransform },
+      style: { ...defaultStyle },
+      subpaths: [
+        { nodes: [makeAnchor(0, 0), makeAnchor(20, 0), makeAnchor(20, 20)], closed: true },
+        { nodes: [makeAnchor(5, 5), makeAnchor(15, 5), makeAnchor(15, 15)], closed: true },
+      ],
+    };
+    const d = pathToD(path);
+    expect(d).toBe("M 0 0 L 20 0 L 20 20 L 0 0 Z M 5 5 L 15 5 L 15 15 L 5 5 Z");
   });
 });

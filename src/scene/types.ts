@@ -10,13 +10,15 @@ export interface Transform {
 }
 
 export interface Style {
-  fill: string; // css color, or 'none'
+  fill: string; // css color, 'none', 'gradient:<id>', or 'pattern:<id>'
   fillOpacity: number;
   stroke: string; // css color, or 'none'
   strokeWidth: number;
   strokeOpacity: number;
   strokeDasharray: string | null;
   opacity: number;
+  /** References a Filter in Scene.filters (`"filter:<id>"`), or null for no filter. */
+  filter: string | null;
 }
 
 interface BaseNode {
@@ -67,10 +69,15 @@ export interface PathAnchor {
   type: PathNodeType;
 }
 
-export interface PathNode extends BaseNode {
-  type: "path";
+/** One contour of a path. A path can have several (e.g. a letter "o" = outer ring + inner hole). */
+export interface PathSubpath {
   nodes: PathAnchor[];
   closed: boolean;
+}
+
+export interface PathNode extends BaseNode {
+  type: "path";
+  subpaths: PathSubpath[];
 }
 
 export interface TextNode extends BaseNode {
@@ -82,7 +89,27 @@ export interface TextNode extends BaseNode {
   textAnchor: "start" | "middle" | "end";
 }
 
-export type SceneNode = RectNode | EllipseNode | LineNode | PolygonNode | PathNode | TextNode;
+export interface GroupNode extends BaseNode {
+  type: "group";
+  childIds: ElementId[];
+  /**
+   * Union bbox of the children at the moment the group was created, in the group's local space
+   * (children keep their pre-existing world coordinates as their local-to-group coordinates,
+   * since a freshly created group starts at an identity transform). Used for selection-handle
+   * sizing; not recomputed automatically if a child is edited afterward while inside the group
+   * (a known, disclosed simplification).
+   */
+  bounds: { x: number; y: number; width: number; height: number };
+}
+
+export type SceneNode =
+  | RectNode
+  | EllipseNode
+  | LineNode
+  | PolygonNode
+  | PathNode
+  | TextNode
+  | GroupNode;
 
 export interface GradientStop {
   offset: number;
@@ -114,21 +141,90 @@ export function gradientIdFromRef(value: string): GradientId {
   return value.slice("gradient:".length);
 }
 
-/** DOM id used for the `<linearGradient>`/`<radialGradient>` element — prefixed to avoid colliding with element ids. Restricted to a safe charset: `id` may originate from an unvalidated loaded project file. */
+/** Restricts a raw id to a safe DOM-id charset — values may originate from an unvalidated loaded project file. */
+function safeIdSuffix(id: string): string {
+  return String(id).replace(/[^A-Za-z0-9_-]/g, "");
+}
+
+/** DOM id used for the `<linearGradient>`/`<radialGradient>` element — prefixed to avoid colliding with element ids. */
 export function gradientElementId(id: GradientId): string {
-  const safe = String(id).replace(/[^A-Za-z0-9_-]/g, "");
-  return `grad-${safe}`;
+  return `grad-${safeIdSuffix(id)}`;
+}
+
+export type PatternId = string;
+
+export type PatternKind = "dots" | "stripes" | "grid" | "checkerboard";
+
+export interface Pattern {
+  id: PatternId;
+  kind: PatternKind;
+  size: number;
+  color: string;
+  background: string;
+}
+
+export function patternRef(id: PatternId): string {
+  return `pattern:${id}`;
+}
+
+export function isPatternRef(value: unknown): value is string {
+  return typeof value === "string" && value.startsWith("pattern:");
+}
+
+export function patternIdFromRef(value: string): PatternId {
+  return value.slice("pattern:".length);
+}
+
+export function patternElementId(id: PatternId): string {
+  return `pat-${safeIdSuffix(id)}`;
 }
 
 /**
- * Resolves a fill/stroke value for actual SVG output — a gradient ref becomes `url(#...)`,
+ * Resolves a fill/stroke value for actual SVG output — a gradient/pattern ref becomes `url(#...)`,
  * anything else passes through as a plain color string. Used identically by the live renderer
  * and the export serializer so they can never drift apart. Defensive against non-string input
  * (an unvalidated loaded project file could set this to anything).
  */
 export function resolvePaint(value: unknown): string {
   if (isGradientRef(value)) return `url(#${gradientElementId(gradientIdFromRef(value))})`;
+  if (isPatternRef(value)) return `url(#${patternElementId(patternIdFromRef(value))})`;
   return typeof value === "string" ? value : "none";
+}
+
+export type FilterId = string;
+export type FilterKind = "blur" | "shadow";
+
+export interface Filter {
+  id: FilterId;
+  kind: FilterKind;
+  /** blur: the feGaussianBlur stdDeviation. shadow: the shadow's own blur softness. */
+  blurRadius: number;
+  /** shadow only. */
+  offsetX: number;
+  offsetY: number;
+  color: string;
+  opacity: number;
+}
+
+export function filterRef(id: FilterId): string {
+  return `filter:${id}`;
+}
+
+export function isFilterRef(value: unknown): value is string {
+  return typeof value === "string" && value.startsWith("filter:");
+}
+
+export function filterIdFromRef(value: string): FilterId {
+  return value.slice("filter:".length);
+}
+
+export function filterElementId(id: FilterId): string {
+  return `filt-${safeIdSuffix(id)}`;
+}
+
+/** Resolves a node's style.filter into the `filter="url(#...)"` attribute value, or undefined for none. */
+export function resolveFilterRef(value: string | null | undefined): string | undefined {
+  return isFilterRef(value) ? `url(#${filterElementId(filterIdFromRef(value))})` : undefined;
 }
 
 export interface Layer {
@@ -139,16 +235,24 @@ export interface Layer {
   elementIds: ElementId[];
 }
 
+export type ArtboardId = string;
+
 export interface Artboard {
+  id: ArtboardId;
+  name: string;
+  x: number;
+  y: number;
   width: number;
   height: number;
 }
 
 export interface Scene {
-  artboard: Artboard;
+  artboards: Artboard[];
   layers: Layer[];
   elements: Record<ElementId, SceneNode>;
   gradients: Record<GradientId, Gradient>;
+  patterns: Record<PatternId, Pattern>;
+  filters: Record<FilterId, Filter>;
 }
 
 export const defaultStyle: Style = {
@@ -159,6 +263,7 @@ export const defaultStyle: Style = {
   strokeOpacity: 1,
   strokeDasharray: null,
   opacity: 1,
+  filter: null,
 };
 
 export const defaultTransform: Transform = {

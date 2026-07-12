@@ -16,8 +16,7 @@ function makePath(): PathNode {
     type: "path",
     transform: { ...defaultTransform },
     style: { ...defaultStyle },
-    nodes: [makeAnchor(0, 0), makeAnchor(10, 0), makeAnchor(10, 10)],
-    closed: false,
+    subpaths: [{ nodes: [makeAnchor(0, 0), makeAnchor(10, 0), makeAnchor(10, 10)], closed: false }],
   };
 }
 
@@ -33,20 +32,20 @@ describe("PathEditCommand", () => {
 
     const before = JSON.parse(JSON.stringify(path)) as PathNode;
     const after = JSON.parse(JSON.stringify(path)) as PathNode;
-    after.nodes[1].anchor = { x: 99, y: 99 };
+    after.subpaths[0].nodes[1].anchor = { x: 99, y: 99 };
 
     useHistoryStore.getState().execute(new PathEditCommand(path.id, before, after));
 
     const stored = useSceneStore.getState().scene.elements[path.id];
     expect(stored?.type).toBe("path");
-    expect((stored as PathNode).nodes[1].anchor).toEqual({ x: 99, y: 99 });
+    expect((stored as PathNode).subpaths[0].nodes[1].anchor).toEqual({ x: 99, y: 99 });
 
     useHistoryStore.getState().undo();
     const reverted = useSceneStore.getState().scene.elements[path.id] as PathNode;
-    expect(reverted.nodes[1].anchor).toEqual({ x: 10, y: 0 });
+    expect(reverted.subpaths[0].nodes[1].anchor).toEqual({ x: 10, y: 0 });
 
     useHistoryStore.getState().redo();
     const redone = useSceneStore.getState().scene.elements[path.id] as PathNode;
-    expect(redone.nodes[1].anchor).toEqual({ x: 99, y: 99 });
+    expect(redone.subpaths[0].nodes[1].anchor).toEqual({ x: 99, y: 99 });
   });
 });

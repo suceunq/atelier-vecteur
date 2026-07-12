@@ -20,7 +20,7 @@ export function SelectionOverlay() {
   const zoom = useViewportStore((s) => s.zoom);
   const marquee = useDraftStore((s) => s.marquee);
   const activeTool = useToolStore((s) => s.activeTool);
-  const selectedAnchorIndex = useNodeEditStore((s) => s.selectedAnchorIndex);
+  const selectedAnchor = useNodeEditStore((s) => s.selectedAnchor);
 
   const strokeWidth = 1 / zoom;
   const dash = `${4 / zoom} ${4 / zoom}`;
@@ -29,7 +29,7 @@ export function SelectionOverlay() {
   const union = unionBBox(nodes.map(worldBBox));
 
   if (activeTool === "nodeEdit" && nodes.length === 1 && nodes[0].type === "path") {
-    return <PathNodeHandles node={nodes[0]} selectedIndex={selectedAnchorIndex} />;
+    return <PathNodeHandles node={nodes[0]} selectedAnchor={selectedAnchor} />;
   }
 
   return (

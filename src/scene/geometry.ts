@@ -40,7 +40,9 @@ export function localBBox(node: SceneNode): BBox {
       return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
     }
     case "path":
-      return controlPolygonBBox(node.nodes);
+      return controlPolygonBBox(node.subpaths);
+    case "group":
+      return { ...node.bounds };
     case "text": {
       // Approximation: no DOM measurement available in this pure-data module. Rendering itself
       // (a real <text> element) is pixel-perfect; this only sizes selection handles/marquee hits.

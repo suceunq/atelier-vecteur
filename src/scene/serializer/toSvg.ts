@@ -1,8 +1,10 @@
 import { pathToD } from "../bezier";
 import { svgTransformString } from "../geometry";
 import { safeNumber } from "../sanitize";
-import { resolvePaint, type Scene, type SceneNode, type Style } from "../types";
+import { resolveFilterRef, resolvePaint, type ArtboardId, type Scene, type SceneNode, type Style } from "../types";
+import { filtersToDefs } from "./filterDefs";
 import { gradientsToDefs } from "./gradientDefs";
+import { patternsToDefs } from "./patternDefs";
 
 function escapeAttr(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
@@ -35,10 +37,14 @@ function styleAttrs(style: Style): string {
   if (style.opacity !== 1) {
     attrs.push(`opacity="${safeNumber(style.opacity, 1)}"`);
   }
+  const filterAttr = resolveFilterRef(style.filter);
+  if (filterAttr) {
+    attrs.push(`filter="${escapeAttr(filterAttr)}"`);
+  }
   return attrs.join(" ");
 }
 
-function nodeToSvg(node: SceneNode): string {
+function nodeToSvg(node: SceneNode, scene: Scene): string {
   const transform = svgTransformString(node);
   const style = styleAttrs(node.style);
 
@@ -62,25 +68,52 @@ function nodeToSvg(node: SceneNode): string {
       return `<path d="${pathToD(node)}" transform="${transform}" ${style}/>`;
     case "text":
       return `<text x="0" y="0" transform="${transform}" font-family="${escapeAttr(String(node.fontFamily))}" font-size="${safeNumber(node.fontSize, 16)}" font-weight="${safeNumber(node.fontWeight, 400)}" text-anchor="${safeTextAnchor(node.textAnchor)}" ${style}>${escapeText(String(node.content))}</text>`;
+    case "group": {
+      const children = node.childIds
+        .map((id) => scene.elements[id])
+        .filter((child): child is SceneNode => Boolean(child))
+        .map((child) => nodeToSvg(child, scene))
+        .join("");
+      return `<g transform="${transform}">${children}</g>`;
+    }
   }
 }
 
-/** Serializes the scene to a standalone, clean SVG document string. */
-export function sceneToSvg(scene: Scene): string {
-  const { width, height } = scene.artboard;
-  const defs = gradientsToDefs(scene.gradients);
+function computeExportBounds(scene: Scene, artboardId?: ArtboardId) {
+  if (artboardId) {
+    const artboard = scene.artboards.find((a) => a.id === artboardId);
+    if (artboard) return artboard;
+  }
+  if (scene.artboards.length === 0) return { x: 0, y: 0, width: 800, height: 600 };
+  if (scene.artboards.length === 1) return scene.artboards[0];
+
+  const minX = Math.min(...scene.artboards.map((a) => a.x));
+  const minY = Math.min(...scene.artboards.map((a) => a.y));
+  const maxX = Math.max(...scene.artboards.map((a) => a.x + a.width));
+  const maxY = Math.max(...scene.artboards.map((a) => a.y + a.height));
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+/** Serializes the scene to a standalone, clean SVG document string. `artboardId` crops to a single artboard; omit to export everything. */
+export function sceneToSvg(scene: Scene, artboardId?: ArtboardId): string {
+  const bounds = computeExportBounds(scene, artboardId);
+  const defs = gradientsToDefs(scene.gradients) + patternsToDefs(scene.patterns) + filtersToDefs(scene.filters);
   const body = scene.layers
     .filter((layer) => layer.visible)
     .map((layer) => {
       const shapes = layer.elementIds
         .map((id) => scene.elements[id])
         .filter((node): node is SceneNode => Boolean(node))
-        .map(nodeToSvg)
+        .map((node) => nodeToSvg(node, scene))
         .join("");
       return `<g>${shapes}</g>`;
     })
     .join("");
 
   const defsBlock = defs ? `<defs>${defs}</defs>` : "";
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${defsBlock}${body}</svg>`;
+  const w = safeNumber(bounds.width, 800);
+  const h = safeNumber(bounds.height, 600);
+  const x = safeNumber(bounds.x);
+  const y = safeNumber(bounds.y);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="${x} ${y} ${w} ${h}">${defsBlock}${body}</svg>`;
 }

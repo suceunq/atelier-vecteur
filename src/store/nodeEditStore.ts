@@ -1,12 +1,17 @@
 import { create } from "zustand";
 
-interface NodeEditState {
-  selectedAnchorIndex: number | null;
-  setSelectedAnchorIndex: (index: number | null) => void;
+export interface AnchorRef {
+  subpathIndex: number;
+  anchorIndex: number;
 }
 
-/** Which anchor (by index) is highlighted in the node-edit overlay — plain tool state wouldn't trigger a re-render. */
+interface NodeEditState {
+  selectedAnchor: AnchorRef | null;
+  setSelectedAnchor: (ref: AnchorRef | null) => void;
+}
+
+/** Which anchor is highlighted in the node-edit overlay — plain tool state wouldn't trigger a re-render. */
 export const useNodeEditStore = create<NodeEditState>((set) => ({
-  selectedAnchorIndex: null,
-  setSelectedAnchorIndex: (index) => set({ selectedAnchorIndex: index }),
+  selectedAnchor: null,
+  setSelectedAnchor: (ref) => set({ selectedAnchor: ref }),
 }));

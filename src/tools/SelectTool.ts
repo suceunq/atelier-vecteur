@@ -68,11 +68,14 @@ export class SelectTool implements Tool {
     }
 
     if (hit.elementId) {
-      const alreadySelected = selection.isSelected(hit.elementId);
+      // Clicking any child of a group selects the whole group; double-click (onDoubleClick)
+      // still resolves the raw child id, so that's how an individual member gets selected.
+      const targetId = useSceneStore.getState().findTopLevelId(hit.elementId);
+      const alreadySelected = selection.isSelected(targetId);
       if (info.shiftKey) {
-        selection.toggle(hit.elementId);
+        selection.toggle(targetId);
       } else if (!alreadySelected) {
-        selection.select([hit.elementId]);
+        selection.select([targetId]);
       }
       this.beginMove(info);
       return;

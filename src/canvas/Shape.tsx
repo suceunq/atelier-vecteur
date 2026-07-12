@@ -1,7 +1,8 @@
 import type { SVGAttributes } from "react";
 import { pathToD } from "../scene/bezier";
 import { svgTransformString } from "../scene/geometry";
-import { resolvePaint, type SceneNode, type Style } from "../scene/types";
+import { resolveFilterRef, resolvePaint, type SceneNode, type Style } from "../scene/types";
+import { useSceneStore } from "../store/sceneStore";
 
 function styleProps(style: Style): SVGAttributes<SVGElement> {
   return {
@@ -12,6 +13,7 @@ function styleProps(style: Style): SVGAttributes<SVGElement> {
     strokeOpacity: style.strokeOpacity,
     strokeDasharray: style.strokeDasharray ?? undefined,
     opacity: style.opacity,
+    filter: resolveFilterRef(style.filter),
   };
 }
 
@@ -22,6 +24,7 @@ interface ShapeProps {
 
 /** Renders one scene node as its literal SVG element — this DOM structure is what gets exported. */
 export function Shape({ node, interactive }: ShapeProps) {
+  const elements = useSceneStore((s) => s.scene.elements);
   const transform = svgTransformString(node);
   const style = styleProps(node.style);
   const dataProps = interactive ? { "data-element-id": node.id } : {};
@@ -68,6 +71,15 @@ export function Shape({ node, interactive }: ShapeProps) {
         >
           {node.content}
         </text>
+      );
+    case "group":
+      return (
+        <g transform={transform} {...dataProps}>
+          {node.childIds.map((childId) => {
+            const child = elements[childId];
+            return child ? <Shape key={childId} node={child} interactive={interactive} /> : null;
+          })}
+        </g>
       );
   }
 }

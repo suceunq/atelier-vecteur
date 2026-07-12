@@ -16,8 +16,7 @@ function buildPathNode(anchors: PathAnchor[], closed: boolean): PathNode {
     type: "path",
     transform: { ...defaultTransform },
     style: { ...defaultStyle, fill: closed ? defaultStyle.fill : "none" },
-    nodes: anchors,
-    closed,
+    subpaths: [{ nodes: anchors, closed }],
   };
 }
 

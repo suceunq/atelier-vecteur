@@ -6,7 +6,7 @@ import type { ElementId, PathAnchor, PathNode } from "../scene/types";
 import { DeleteCommand } from "../store/commands/DeleteCommand";
 import { PathEditCommand } from "../store/commands/PathEditCommand";
 import { useHistoryStore } from "../store/historyStore";
-import { useNodeEditStore } from "../store/nodeEditStore";
+import { useNodeEditStore, type AnchorRef } from "../store/nodeEditStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useSelectionStore } from "../store/selectionStore";
 import { useToolStore } from "../store/toolStore";
@@ -18,6 +18,17 @@ function cloneNode(node: PathNode): PathNode {
   return JSON.parse(JSON.stringify(node));
 }
 
+/** Parses a `node:{subpathIndex}:{anchorIndex}` / `handleIn:...` / `handleOut:...` handle id. */
+function parseAnchorHandle(handle: string, prefix: string): AnchorRef | null {
+  if (!handle.startsWith(`${prefix}:`)) return null;
+  const [subpathIndex, anchorIndex] = handle
+    .slice(prefix.length + 1)
+    .split(":")
+    .map(Number);
+  if (Number.isNaN(subpathIndex) || Number.isNaN(anchorIndex)) return null;
+  return { subpathIndex, anchorIndex };
+}
+
 type DragKind = "anchor" | "handleIn" | "handleOut";
 
 /** Node-level editing of a selected PathNode's anchors and bezier handles. Only meaningful with a single path selected. */
@@ -25,7 +36,7 @@ export class NodeEditTool implements Tool {
   readonly id = "nodeEdit";
   cursor = "default";
 
-  private dragging: { kind: DragKind; index: number; before: PathNode } | null = null;
+  private dragging: { kind: DragKind; ref: AnchorRef; before: PathNode } | null = null;
 
   private getPathId(): ElementId | null {
     const ids = useSelectionStore.getState().selectedIds;
@@ -49,28 +60,28 @@ export class NodeEditTool implements Tool {
     }
 
     const hit = hitTestAtScreenPoint(info.screen.x, info.screen.y);
-    if (hit.handle?.startsWith("node:")) {
-      const index = Number(hit.handle.slice("node:".length));
-      useNodeEditStore.getState().setSelectedAnchorIndex(index);
+    const nodeRef = hit.handle && parseAnchorHandle(hit.handle, "node");
+    if (nodeRef) {
+      useNodeEditStore.getState().setSelectedAnchor(nodeRef);
       if (info.altKey) {
-        this.toggleAnchorType(index);
+        this.toggleAnchorType(nodeRef);
         return;
       }
-      this.dragging = { kind: "anchor", index, before: cloneNode(path) };
+      this.dragging = { kind: "anchor", ref: nodeRef, before: cloneNode(path) };
       return;
     }
-    if (hit.handle?.startsWith("handleIn:")) {
-      const index = Number(hit.handle.slice("handleIn:".length));
-      this.dragging = { kind: "handleIn", index, before: cloneNode(path) };
+    const handleInRef = hit.handle && parseAnchorHandle(hit.handle, "handleIn");
+    if (handleInRef) {
+      this.dragging = { kind: "handleIn", ref: handleInRef, before: cloneNode(path) };
       return;
     }
-    if (hit.handle?.startsWith("handleOut:")) {
-      const index = Number(hit.handle.slice("handleOut:".length));
-      this.dragging = { kind: "handleOut", index, before: cloneNode(path) };
+    const handleOutRef = hit.handle && parseAnchorHandle(hit.handle, "handleOut");
+    if (handleOutRef) {
+      this.dragging = { kind: "handleOut", ref: handleOutRef, before: cloneNode(path) };
       return;
     }
 
-    useNodeEditStore.getState().setSelectedAnchorIndex(null);
+    useNodeEditStore.getState().setSelectedAnchor(null);
     if (hit.elementId && hit.elementId !== path.id) {
       useSelectionStore.getState().select([hit.elementId]);
       useToolStore.getState().setActiveTool("select");
@@ -83,7 +94,8 @@ export class NodeEditTool implements Tool {
     if (!path) return;
 
     const local = worldToLocal(path, info.user);
-    const anchor = path.nodes[this.dragging.index];
+    const subpath = path.subpaths[this.dragging.ref.subpathIndex];
+    const anchor = subpath?.nodes[this.dragging.ref.anchorIndex];
     if (!anchor) return;
 
     if (this.dragging.kind === "anchor") {
@@ -99,7 +111,7 @@ export class NodeEditTool implements Tool {
       }
     }
 
-    useSceneStore.getState().updateElementGeometry(path.id, { nodes: [...path.nodes] });
+    useSceneStore.getState().updateElementGeometry(path.id, { subpaths: [...path.subpaths] });
   }
 
   onPointerUp() {
@@ -128,16 +140,19 @@ export class NodeEditTool implements Tool {
 
     const before = cloneNode(path);
     const segments = pathSegments(path);
-    const segment = segments.find((s) => s.startIndex === closest.segmentIndex);
+    const segment = segments.find(
+      (s) => s.subpathIndex === closest.subpathIndex && s.startIndex === closest.segmentIndex
+    );
     if (!segment) return;
 
     const { left, right } = subdivideCubic(segment.p0, segment.p1, segment.p2, segment.p3, closest.t);
     const [, q1, q2, splitPoint] = left;
     const [, r1, r2] = right;
 
-    const count = path.nodes.length;
-    const startAnchor = path.nodes[segment.startIndex];
-    const endAnchor = path.nodes[(segment.startIndex + 1) % count];
+    const subpath = path.subpaths[closest.subpathIndex];
+    const count = subpath.nodes.length;
+    const startAnchor = subpath.nodes[segment.startIndex];
+    const endAnchor = subpath.nodes[(segment.startIndex + 1) % count];
 
     if (!segment.isLine) {
       startAnchor.handleOut = { x: q1.x - startAnchor.anchor.x, y: q1.y - startAnchor.anchor.y };
@@ -152,9 +167,10 @@ export class NodeEditTool implements Tool {
       type: "corner",
     };
 
-    const nodes = [...path.nodes];
+    const nodes = [...subpath.nodes];
     nodes.splice(segment.startIndex + 1, 0, newAnchor);
-    useSceneStore.getState().updateElementGeometry(path.id, { nodes });
+    const subpaths = path.subpaths.map((sp, i) => (i === closest.subpathIndex ? { ...sp, nodes } : sp));
+    useSceneStore.getState().updateElementGeometry(path.id, { subpaths });
 
     const after = useSceneStore.getState().scene.elements[path.id];
     if (after?.type === "path") {
@@ -162,11 +178,12 @@ export class NodeEditTool implements Tool {
     }
   }
 
-  /** Alt+click on an anchor toggles corner <-> smooth (wired from the app's Alt+click handling via SelectTool passthrough is not needed — handled here since NodeEditTool owns pointerdown while active). */
-  toggleAnchorType(index: number) {
+  /** Alt+click on an anchor toggles corner <-> smooth. */
+  toggleAnchorType(ref: AnchorRef) {
     const path = this.getPath();
     if (!path) return;
-    const anchor = path.nodes[index];
+    const subpath = path.subpaths[ref.subpathIndex];
+    const anchor = subpath?.nodes[ref.anchorIndex];
     if (!anchor) return;
     const before = cloneNode(path);
 
@@ -181,7 +198,7 @@ export class NodeEditTool implements Tool {
       }
     }
 
-    useSceneStore.getState().updateElementGeometry(path.id, { nodes: [...path.nodes] });
+    useSceneStore.getState().updateElementGeometry(path.id, { subpaths: [...path.subpaths] });
     const after = useSceneStore.getState().scene.elements[path.id];
     if (after?.type === "path") {
       useHistoryStore.getState().execute(new PathEditCommand(path.id, before, cloneNode(after)));
@@ -190,20 +207,36 @@ export class NodeEditTool implements Tool {
 
   deleteSelectedAnchor() {
     const path = this.getPath();
-    const selectedAnchorIndex = useNodeEditStore.getState().selectedAnchorIndex;
-    if (!path || selectedAnchorIndex === null) return;
+    const ref = useNodeEditStore.getState().selectedAnchor;
+    if (!path || !ref) return;
+    const subpath = path.subpaths[ref.subpathIndex];
+    if (!subpath) return;
 
-    if (path.nodes.length <= 2) {
-      useHistoryStore.getState().execute(new DeleteCommand([path.id]));
-      useSelectionStore.getState().clear();
-      useToolStore.getState().setActiveTool("select");
+    if (subpath.nodes.length <= 2) {
+      // Removing this subpath's near-degenerate remainder: drop the whole subpath, or the whole
+      // path if it was the only one.
+      if (path.subpaths.length <= 1) {
+        useHistoryStore.getState().execute(new DeleteCommand([path.id]));
+        useSelectionStore.getState().clear();
+        useToolStore.getState().setActiveTool("select");
+        return;
+      }
+      const before = cloneNode(path);
+      const subpaths = path.subpaths.filter((_, i) => i !== ref.subpathIndex);
+      useNodeEditStore.getState().setSelectedAnchor(null);
+      useSceneStore.getState().updateElementGeometry(path.id, { subpaths });
+      const after = useSceneStore.getState().scene.elements[path.id];
+      if (after?.type === "path") {
+        useHistoryStore.getState().execute(new PathEditCommand(path.id, before, cloneNode(after)));
+      }
       return;
     }
 
     const before = cloneNode(path);
-    const nodes = path.nodes.filter((_, i) => i !== selectedAnchorIndex);
-    useNodeEditStore.getState().setSelectedAnchorIndex(null);
-    useSceneStore.getState().updateElementGeometry(path.id, { nodes });
+    const nodes = subpath.nodes.filter((_, i) => i !== ref.anchorIndex);
+    const subpaths = path.subpaths.map((sp, i) => (i === ref.subpathIndex ? { ...sp, nodes } : sp));
+    useNodeEditStore.getState().setSelectedAnchor(null);
+    useSceneStore.getState().updateElementGeometry(path.id, { subpaths });
     const after = useSceneStore.getState().scene.elements[path.id];
     if (after?.type === "path") {
       useHistoryStore.getState().execute(new PathEditCommand(path.id, before, cloneNode(after)));
@@ -212,7 +245,7 @@ export class NodeEditTool implements Tool {
 
   onCancel() {
     this.dragging = null;
-    useNodeEditStore.getState().setSelectedAnchorIndex(null);
+    useNodeEditStore.getState().setSelectedAnchor(null);
     useToolStore.getState().setActiveTool("select");
   }
 }

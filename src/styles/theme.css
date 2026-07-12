@@ -221,6 +221,28 @@ body,
   width: 50px;
 }
 
+.artboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.artboard-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.artboard-row input[type="number"] {
+  width: 48px;
+}
+
+.artboard-name-input {
+  flex: 1;
+  min-width: 0;
+}
+
 .layers-list {
   display: flex;
   flex-direction: column;

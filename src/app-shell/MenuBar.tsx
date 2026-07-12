@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { exportSvg } from "../io/svgExport";
 import { openProject, saveProjectAs } from "../io/projectFile";
+import { checkForUpdates, installUpdateAndRelaunch } from "../io/updater";
 import { ExportPngDialog } from "../panels/ExportPanel/ExportPngDialog";
 import { createEmptyScene } from "../scene/factory";
 import { useHistoryStore } from "../store/historyStore";
@@ -38,6 +39,28 @@ export function MenuBar() {
       await exportSvg();
     } catch (err) {
       window.alert(err instanceof Error ? err.message : "Impossible d'exporter le SVG.");
+    }
+  };
+
+  const handleCheckForUpdates = async () => {
+    try {
+      const update = await checkForUpdates();
+      if (!update) {
+        window.alert("Vous utilisez déjà la dernière version.");
+        return;
+      }
+      const confirmed = window.confirm(
+        `Une nouvelle version (${update.version}) est disponible. L'installer et redémarrer l'application maintenant ?`
+      );
+      if (confirmed) {
+        await installUpdateAndRelaunch(update);
+      }
+    } catch (err) {
+      window.alert(
+        err instanceof Error
+          ? `Vérification des mises à jour impossible : ${err.message}`
+          : "Vérification des mises à jour impossible (serveur de mise à jour non configuré ou injoignable)."
+      );
     }
   };
 
@@ -87,6 +110,15 @@ export function MenuBar() {
           </button>
           <button className="menu-item" onClick={() => useViewportStore.getState().setZoom(1)}>
             Réinitialiser le zoom (100%)
+          </button>
+        </div>
+      </details>
+
+      <details className="menu">
+        <summary>Aide</summary>
+        <div className="menu-dropdown">
+          <button className="menu-item" onClick={() => void handleCheckForUpdates()}>
+            Vérifier les mises à jour…
           </button>
         </div>
       </details>

@@ -16,27 +16,41 @@ describe("isPlausibleScene", () => {
 
   it("rejects a scene missing required fields", () => {
     expect(isPlausibleScene({})).toBe(false);
-    expect(isPlausibleScene({ artboard: { width: 1, height: 1 } })).toBe(false);
+    expect(isPlausibleScene({ artboards: [{ width: 1, height: 1 }] })).toBe(false);
     expect(
-      isPlausibleScene({ artboard: { width: 1, height: 1 }, layers: [], elements: {} })
+      isPlausibleScene({ artboards: [{ width: 1, height: 1 }], layers: [], elements: {} })
     ).toBe(false);
   });
 
   it("rejects a scene with the wrong field types", () => {
     expect(
       isPlausibleScene({
-        artboard: { width: "800", height: 600 },
+        artboards: [{ width: "800", height: 600 }],
         layers: [],
         elements: {},
         gradients: {},
+        patterns: {},
+        filters: {},
       })
     ).toBe(false);
     expect(
       isPlausibleScene({
-        artboard: { width: 800, height: 600 },
+        artboards: [{ width: 800, height: 600 }],
         layers: "not-an-array",
         elements: {},
         gradients: {},
+        patterns: {},
+        filters: {},
+      })
+    ).toBe(false);
+    expect(
+      isPlausibleScene({
+        artboards: [],
+        layers: [],
+        elements: {},
+        gradients: {},
+        patterns: {},
+        filters: {},
       })
     ).toBe(false);
   });
