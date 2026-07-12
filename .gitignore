@@ -4,6 +4,9 @@ src-tauri/target/
 .DS_Store
 *.log
 
+# Compiled installers copied here for easy manual testing — build artifacts, not source.
+logiciel-fini/
+
 # Updater signing private key — never commit. The .pub file is safe to commit (it's already
 # embedded in tauri.conf.json), only the bare .pem must stay secret.
 src-tauri/updater_signing_key.pem

@@ -8,11 +8,21 @@ import { createEmptyScene } from "../scene/factory";
 import { useHistoryStore } from "../store/historyStore";
 import { useSceneStore } from "../store/sceneStore";
 import { useSelectionStore } from "../store/selectionStore";
+import { useSettingsStore } from "../store/settingsStore";
 import { useViewportStore } from "../store/viewportStore";
+
+// Menus are native <details>/<summary> elements, which don't close themselves when an
+// item inside is clicked. Closing the nearest ancestor <details> on any click inside the
+// dropdown (after the item's own onClick has already run, via event bubbling) mimics the
+// usual "menu closes after you pick something" behavior.
+function closeMenu(e: React.MouseEvent<HTMLDivElement>) {
+  e.currentTarget.closest("details")?.removeAttribute("open");
+}
 
 export function MenuBar() {
   const [showPngDialog, setShowPngDialog] = useState(false);
   const [showImageImportDialog, setShowImageImportDialog] = useState(false);
+  const theme = useSettingsStore((s) => s.theme);
 
   const handleNew = () => {
     useSceneStore.getState().replaceScene(createEmptyScene());
@@ -72,7 +82,7 @@ export function MenuBar() {
 
       <details className="menu">
         <summary>Fichier</summary>
-        <div className="menu-dropdown">
+        <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={handleNew}>
             Nouveau
           </button>
@@ -98,7 +108,7 @@ export function MenuBar() {
 
       <details className="menu">
         <summary>Édition</summary>
-        <div className="menu-dropdown">
+        <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={() => useHistoryStore.getState().undo()}>
             Annuler (Ctrl+Z)
           </button>
@@ -110,19 +120,26 @@ export function MenuBar() {
 
       <details className="menu">
         <summary>Affichage</summary>
-        <div className="menu-dropdown">
+        <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={() => useViewportStore.getState().toggleGrid()}>
             Basculer la grille
           </button>
           <button className="menu-item" onClick={() => useViewportStore.getState().setZoom(1)}>
             Réinitialiser le zoom (100%)
           </button>
+          <hr />
+          <button
+            className={`menu-item${theme === "dark" ? " menu-item-checked" : ""}`}
+            onClick={() => useSettingsStore.getState().toggleTheme()}
+          >
+            Mode sombre
+          </button>
         </div>
       </details>
 
       <details className="menu">
         <summary>Aide</summary>
-        <div className="menu-dropdown">
+        <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={() => void handleCheckForUpdates()}>
             Vérifier les mises à jour…
           </button>

@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { getTool } from "../tools/ToolManager";
 import type { PointerInfo } from "../tools/types";
+import { useSettingsStore } from "../store/settingsStore";
 import { useToolStore } from "../store/toolStore";
 import { useViewportStore } from "../store/viewportStore";
 import { SceneRenderer } from "./SceneRenderer";
@@ -84,15 +85,16 @@ export function CanvasViewport() {
   };
 
   const handleWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const screen = toScreen(e.clientX, e.clientY);
-      const factor = Math.exp(-e.deltaY * 0.01);
-      const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * factor));
-      setZoom(newZoom, screen);
-    } else {
+    if (e.shiftKey) {
+      // Shift+wheel pans instead of zooming, for trackpads/mice without a dedicated pan gesture.
       setPan({ x: pan.x - e.deltaX, y: pan.y - e.deltaY });
+      return;
     }
+    e.preventDefault();
+    const screen = toScreen(e.clientX, e.clientY);
+    const factor = Math.exp(-e.deltaY * 0.01);
+    const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * factor));
+    setZoom(newZoom, screen);
   };
 
   const handleKeyDown = useCallback(
@@ -111,6 +113,9 @@ export function CanvasViewport() {
   const handleDoubleClick = (e: React.MouseEvent) => {
     getTool(activeTool).onDoubleClick?.(buildPointerInfo(e));
   };
+
+  const theme = useSettingsStore((s) => s.theme);
+  const gridStroke = theme === "dark" ? "#1f2937" : "#cbd5e1";
 
   const gridPatternSize = gridSize * zoom;
   const gridOffsetX = pan.x % gridPatternSize;
@@ -134,7 +139,6 @@ export function CanvasViewport() {
         height: "100%",
         touchAction: "none",
         outline: "none",
-        background: "#e2e8f0",
       }}
     >
       {showGrid && (
@@ -151,7 +155,7 @@ export function CanvasViewport() {
               <path
                 d={`M ${gridPatternSize} 0 L 0 0 0 ${gridPatternSize}`}
                 fill="none"
-                stroke="#cbd5e1"
+                stroke={gridStroke}
                 strokeWidth={1}
               />
             </pattern>
