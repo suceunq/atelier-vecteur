@@ -84,22 +84,63 @@ impl TraceOptions {
     }
 }
 
+/// Tracing cost (vtracer's curve-fitting) grows with pixel count, and a phone-camera photo
+/// easily exceeds this before any editing benefit — the result gets scaled down to fit the
+/// artboard anyway. Downscaling first keeps a multi-megapixel import from taking minutes.
+const MAX_TRACE_DIM: u32 = 1500;
+
+/// A photographic image in full-color mode can legitimately decompose into tens of thousands of
+/// tiny same-color regions (a real test photo hit ~20 000 with default settings) — each becomes
+/// an editable PathNode and a live SVG DOM element on the frontend. Downscaling the bitmap only
+/// controls trace *time*; it does nothing for path *count* on a busy/noisy photo, so the app
+/// would still lock up turning 20 000 paths into scene nodes and DOM elements. Reject past this
+/// point with an actionable message rather than silently handing the frontend an unusable result.
+const MAX_TRACE_PATHS: usize = 3000;
+
 /// Traces a picked raster image into an SVG string (one `<path>` per color region) via `vtracer`.
 /// The caller parses that SVG's `<path>` elements into editable `PathNode`s.
+///
+/// Runs on a blocking thread: this is CPU-heavy (curve fitting over every pixel), and a plain
+/// synchronous `#[command]` would otherwise tie up the same thread pool that services the
+/// WebView's IPC/asset requests — from the user's perspective the whole window would stop
+/// responding until tracing finished, rather than just the import dialog showing its own
+/// "en cours" state.
 #[command]
-pub fn trace_image(path: String, options: TraceOptions) -> Result<String, String> {
-    image_mime_for_extension(&path)?;
-    let bytes = read_capped(&path)?;
-    let img = image::load_from_memory(&bytes).map_err(|e| e.to_string())?;
-    let rgba = img.to_rgba8();
-    let (width, height) = rgba.dimensions();
-    if width == 0 || height == 0 {
-        return Err("Image vide.".to_string());
-    }
-    let mut color_image = vtracer::ColorImage::new_w_h(width as usize, height as usize);
-    color_image.pixels = rgba.into_raw();
-    let svg = vtracer::convert(color_image, options.to_config())?;
-    Ok(svg.to_string())
+pub async fn trace_image(path: String, options: TraceOptions) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
+        image_mime_for_extension(&path)?;
+        let bytes = read_capped(&path)?;
+        let img = image::load_from_memory(&bytes).map_err(|e| e.to_string())?;
+        let (width, height) = (img.width(), img.height());
+        if width == 0 || height == 0 {
+            return Err("Image vide.".to_string());
+        }
+        let longest = width.max(height);
+        let resized = if longest > MAX_TRACE_DIM {
+            let scale = MAX_TRACE_DIM as f64 / longest as f64;
+            let new_width = ((width as f64) * scale).round().max(1.0) as u32;
+            let new_height = ((height as f64) * scale).round().max(1.0) as u32;
+            img.resize(new_width, new_height, image::imageops::FilterType::Lanczos3)
+        } else {
+            img
+        };
+        let rgba = resized.to_rgba8();
+        let (width, height) = rgba.dimensions();
+        let mut color_image = vtracer::ColorImage::new_w_h(width as usize, height as usize);
+        color_image.pixels = rgba.into_raw();
+        let svg = vtracer::convert(color_image, options.to_config())?.to_string();
+        let path_count = svg.matches("<path").count();
+        if path_count > MAX_TRACE_PATHS {
+            return Err(format!(
+                "Le tracé produirait {path_count} formes — bien trop pour rester éditable (limite {MAX_TRACE_PATHS}). \
+                 Essayez : augmenter « Filtrer le bruit », réduire « Précision des couleurs », \
+                 ou passer en mode couleur « Noir et blanc »."
+            ));
+        }
+        Ok(svg)
+    })
+    .await
+    .map_err(|e| format!("Le tracé a échoué de façon inattendue : {e}"))?
 }
 
 #[cfg(test)]
