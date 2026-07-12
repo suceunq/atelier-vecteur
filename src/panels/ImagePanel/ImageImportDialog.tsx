@@ -18,6 +18,18 @@ type ImportMode = "raster" | "vector";
 
 const MAX_PLACEMENT_DIM = 500;
 
+/**
+ * Scale factor to shrink an imported image/trace to a reasonable on-canvas size. Capped by both
+ * a fixed max dimension AND a fraction of the target artboard's own size — a small custom
+ * artboard should never end up with an imported image towering far outside its bounds just
+ * because MAX_PLACEMENT_DIM alone happened to be smaller than the image but bigger than the
+ * artboard.
+ */
+function fitScale(maxDim: number, artboard: { width: number; height: number }): number {
+  const cap = Math.min(MAX_PLACEMENT_DIM, artboard.width * 0.8, artboard.height * 0.8);
+  return maxDim > cap ? cap / maxDim : 1;
+}
+
 export function ImageImportDialog({ onClose }: { onClose: () => void }) {
   const [path, setPath] = useState<string | null>(null);
   const [mode, setMode] = useState<ImportMode>("raster");
@@ -50,7 +62,7 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
       const artboard = placement();
       if (mode === "raster") {
         const { dataUri, width, height } = await importImageAsDataUri(path);
-        const scale = Math.max(width, height) > MAX_PLACEMENT_DIM ? MAX_PLACEMENT_DIM / Math.max(width, height) : 1;
+        const scale = fitScale(Math.max(width, height), artboard);
         const w = width * scale;
         const h = height * scale;
         const x = artboard.x + (artboard.width - w) / 2;
@@ -75,7 +87,7 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
         });
         const group = createGroup(pathNodes);
         const maxDim = Math.max(group.bounds.width, group.bounds.height) || 1;
-        const scale = maxDim > MAX_PLACEMENT_DIM ? MAX_PLACEMENT_DIM / maxDim : 1;
+        const scale = fitScale(maxDim, artboard);
         group.transform.scaleX = scale;
         group.transform.scaleY = scale;
         group.transform.x = artboard.x + (artboard.width - group.bounds.width * scale) / 2;

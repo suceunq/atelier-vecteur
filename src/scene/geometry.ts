@@ -136,18 +136,24 @@ function localHandlePoint(local: BBox, handle: string): Point {
   }
 }
 
-/** Maps a point in the node's local coordinate space into world/user space (applies rotation then translation). */
+/** Maps a point in the node's local coordinate space into world/user space (applies scale, then rotation, then translation — matching `worldBBox`'s convention). */
 export function localToWorldPoint(node: SceneNode, localPoint: Point): Point {
+  const { rotation, x: tx, y: ty, scaleX, scaleY } = node.transform;
   const center = localCenter(node);
-  const rotated = rotatePoint(localPoint, center, node.transform.rotation);
-  return { x: rotated.x + node.transform.x, y: rotated.y + node.transform.y };
+  const scaledPoint = { x: localPoint.x * scaleX, y: localPoint.y * scaleY };
+  const scaledCenter = { x: center.x * scaleX, y: center.y * scaleY };
+  const rotated = rotatePoint(scaledPoint, scaledCenter, rotation);
+  return { x: rotated.x + tx, y: rotated.y + ty };
 }
 
 /** Inverse of the node's transform: maps a world/user-space point back into the node's local coordinate space. */
 export function worldToLocal(node: SceneNode, worldPoint: Point): Point {
+  const { rotation, x: tx, y: ty, scaleX, scaleY } = node.transform;
   const center = localCenter(node);
-  const relative = { x: worldPoint.x - node.transform.x, y: worldPoint.y - node.transform.y };
-  return rotatePoint(relative, center, -node.transform.rotation);
+  const scaledCenter = { x: center.x * scaleX, y: center.y * scaleY };
+  const relative = { x: worldPoint.x - tx, y: worldPoint.y - ty };
+  const unrotated = rotatePoint(relative, scaledCenter, -rotation);
+  return { x: unrotated.x / (scaleX || 1), y: unrotated.y / (scaleY || 1) };
 }
 
 /** World position of a named resize handle, following the shape's own rotation (not the axis-aligned bbox). */

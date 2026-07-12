@@ -13,10 +13,13 @@ import { useTextEditStore } from "../store/textEditStore";
 import { useToolStore } from "../store/toolStore";
 import {
   applyRectResize,
+  applyScaleResize,
   beginRectResize,
+  beginScaleResize,
   ellipseRadiiFromPointer,
   polygonScaleFromPointer,
   type RectResizeState,
+  type ScaleResizeState,
 } from "./resizeMath";
 import type { PointerInfo, Tool } from "./types";
 
@@ -42,6 +45,7 @@ export class SelectTool implements Tool {
   private resizeHandle: string | null = null;
   private resizeBeforeNode: SceneNode | null = null;
   private rectResizeState: RectResizeState | null = null;
+  private scaleResizeState: ScaleResizeState | null = null;
   private polygonDragRadius = 0;
 
   // rotate
@@ -132,6 +136,8 @@ export class SelectTool implements Tool {
       this.rectResizeState = beginRectResize(node, handle);
     } else if (node.type === "polygon") {
       this.polygonDragRadius = Math.hypot(node.points[0]?.x ?? 0, node.points[0]?.y ?? 0) || 1;
+    } else if (node.type === "group" || node.type === "path" || node.type === "image" || node.type === "text") {
+      this.scaleResizeState = beginScaleResize(node, handle);
     }
   }
 
@@ -209,6 +215,9 @@ export class SelectTool implements Tool {
           y2: endWorld.y - info.user.y,
         });
       }
+    } else if (this.scaleResizeState) {
+      const { scaleX, scaleY, x, y } = applyScaleResize(this.scaleResizeState, this.resizeHandle, info.user);
+      store.updateElementTransform(this.resizeId, { scaleX, scaleY, x, y });
     }
   }
 
@@ -291,6 +300,7 @@ export class SelectTool implements Tool {
     this.resizeHandle = null;
     this.resizeBeforeNode = null;
     this.rectResizeState = null;
+    this.scaleResizeState = null;
   }
 
   private finishRotate() {
