@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { Update } from "@tauri-apps/plugin-updater";
 import { exportSvg } from "../io/svgExport";
 import { openProject, saveProjectAs } from "../io/projectFile";
-import { checkForUpdates, installUpdateAndRelaunch } from "../io/updater";
+import { checkForUpdates } from "../io/updater";
 import { ExportPngDialog } from "../panels/ExportPanel/ExportPngDialog";
 import { ImageImportDialog } from "../panels/ImagePanel/ImageImportDialog";
 import { createEmptyScene } from "../scene/factory";
@@ -10,6 +11,7 @@ import { useSceneStore } from "../store/sceneStore";
 import { useSelectionStore } from "../store/selectionStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useViewportStore } from "../store/viewportStore";
+import { UpdateDialog } from "./UpdateDialog";
 
 // Menus are native <details>/<summary> elements, which don't close themselves when an
 // item inside is clicked. Closing the nearest ancestor <details> on any click inside the
@@ -22,7 +24,21 @@ function closeMenu(e: React.MouseEvent<HTMLDivElement>) {
 export function MenuBar() {
   const [showPngDialog, setShowPngDialog] = useState(false);
   const [showImageImportDialog, setShowImageImportDialog] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
   const theme = useSettingsStore((s) => s.theme);
+
+  // Silent check on launch: an update found here opens the same dialog as the manual menu
+  // action, but a failure (endpoint unreachable, offline, etc.) stays silent — the user didn't
+  // ask for anything, so there's nothing to report back beyond "no update dialog appeared".
+  useEffect(() => {
+    checkForUpdates()
+      .then((update) => {
+        if (update) setPendingUpdate(update);
+      })
+      .catch(() => {
+        // ignored — see comment above
+      });
+  }, []);
 
   const handleNew = () => {
     useSceneStore.getState().replaceScene(createEmptyScene());
@@ -61,12 +77,7 @@ export function MenuBar() {
         window.alert("Vous utilisez déjà la dernière version.");
         return;
       }
-      const confirmed = window.confirm(
-        `Une nouvelle version (${update.version}) est disponible. L'installer et redémarrer l'application maintenant ?`
-      );
-      if (confirmed) {
-        await installUpdateAndRelaunch(update);
-      }
+      setPendingUpdate(update);
     } catch (err) {
       window.alert(
         err instanceof Error
@@ -148,6 +159,7 @@ export function MenuBar() {
 
       {showPngDialog && <ExportPngDialog onClose={() => setShowPngDialog(false)} />}
       {showImageImportDialog && <ImageImportDialog onClose={() => setShowImageImportDialog(false)} />}
+      {pendingUpdate && <UpdateDialog update={pendingUpdate} onClose={() => setPendingUpdate(null)} />}
     </div>
   );
 }
