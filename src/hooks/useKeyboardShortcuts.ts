@@ -12,6 +12,7 @@ import { useSceneStore } from "../store/sceneStore";
 import { useSelectionStore } from "../store/selectionStore";
 import { useToolStore } from "../store/toolStore";
 import type { ToolId } from "../tools/ToolManager";
+import { saveProject } from "../io/projectFile";
 
 const PASTE_OFFSET = 20;
 
@@ -41,6 +42,14 @@ export function useKeyboardShortcuts() {
       const isRedo =
         ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "z") ||
         ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y");
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void saveProject().catch((error) =>
+          window.alert(error instanceof Error ? error.message : "Échec de l’enregistrement.")
+        );
+        return;
+      }
 
       if (isUndo) {
         e.preventDefault();

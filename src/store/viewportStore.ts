@@ -12,6 +12,7 @@ interface ViewportState {
   setZoom: (zoom: number, pivot?: Point) => void;
   toggleGrid: () => void;
   toggleSnap: () => void;
+  setGridSize: (size: number) => void;
   setCursorUser: (point: Point | null) => void;
 }
 
@@ -40,4 +41,5 @@ export const useViewportStore = create<ViewportState>((set, get) => ({
   },
   toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
   toggleSnap: () => set((state) => ({ snapEnabled: !state.snapEnabled })),
+  setGridSize: (gridSize) => set({ gridSize: Math.min(500, Math.max(1, gridSize)) }),
 }));

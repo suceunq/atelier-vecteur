@@ -18,6 +18,7 @@ export function CanvasViewport() {
   const zoom = useViewportStore((s) => s.zoom);
   const gridSize = useViewportStore((s) => s.gridSize);
   const showGrid = useViewportStore((s) => s.showGrid);
+  const snapEnabled = useViewportStore((s) => s.snapEnabled);
   const setPan = useViewportStore((s) => s.setPan);
   const setZoom = useViewportStore((s) => s.setZoom);
 
@@ -36,15 +37,19 @@ export function CanvasViewport() {
   const buildPointerInfo = useCallback(
     (e: React.PointerEvent | React.MouseEvent, screenOverride?: { x: number; y: number }): PointerInfo => {
       const screen = screenOverride ?? toScreen(e.clientX, e.clientY);
+      const rawUser = screenToUser(screen, viewport);
+      const user = snapEnabled
+        ? { x: Math.round(rawUser.x / gridSize) * gridSize, y: Math.round(rawUser.y / gridSize) * gridSize }
+        : rawUser;
       return {
         screen: { x: e.clientX, y: e.clientY },
-        user: screenToUser(screen, viewport),
+        user,
         shiftKey: e.shiftKey,
         altKey: e.altKey,
         viewport,
       };
     },
-    [toScreen, viewport]
+    [toScreen, viewport, snapEnabled, gridSize]
   );
 
   const handlePointerDown = (e: React.PointerEvent) => {

@@ -1,7 +1,7 @@
 use crate::project::schema::{LoadedProject, ProjectManifest};
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{Read, Write};
-use tauri::command;
+use tauri::{command, AppHandle, Manager};
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
@@ -10,6 +10,44 @@ use zip::ZipWriter;
 /// bomb to that extension and sending it to the user — bound the read so opening one can't
 /// exhaust memory.
 const MAX_ENTRY_BYTES: u64 = 200 * 1024 * 1024;
+
+fn recovery_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
+    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir.join("recovery.json"))
+}
+
+#[command]
+pub fn save_recovery(app: AppHandle, scene: serde_json::Value) -> Result<(), String> {
+    let path = recovery_path(&app)?;
+    let temporary = path.with_extension("tmp");
+    fs::write(&temporary, serde_json::to_vec(&scene).map_err(|e| e.to_string())?)
+        .map_err(|e| e.to_string())?;
+    fs::rename(temporary, path).map_err(|e| e.to_string())
+}
+
+#[command]
+pub fn load_recovery(app: AppHandle) -> Result<Option<serde_json::Value>, String> {
+    let path = recovery_path(&app)?;
+    if !path.exists() {
+        return Ok(None);
+    }
+    let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
+    if metadata.len() > MAX_ENTRY_BYTES {
+        return Err("La sauvegarde de récupération est trop volumineuse.".to_string());
+    }
+    let bytes = fs::read(path).map_err(|e| e.to_string())?;
+    serde_json::from_slice(&bytes).map(Some).map_err(|e| e.to_string())
+}
+
+#[command]
+pub fn clear_recovery(app: AppHandle) -> Result<(), String> {
+    let path = recovery_path(&app)?;
+    if path.exists() {
+        fs::remove_file(path).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
 
 fn read_entry_to_string<R: Read>(entry: &mut R, name: &str) -> Result<String, String> {
     let mut s = String::new();

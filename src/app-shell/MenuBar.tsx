@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Update } from "@tauri-apps/plugin-updater";
 import { exportSvg } from "../io/svgExport";
-import { openProject, saveProjectAs } from "../io/projectFile";
+import { openProject, saveProject, saveProjectAs } from "../io/projectFile";
 import { checkForUpdates } from "../io/updater";
 import { ExportPngDialog } from "../panels/ExportPanel/ExportPngDialog";
 import { ImageImportDialog } from "../panels/ImagePanel/ImageImportDialog";
@@ -11,6 +11,7 @@ import { useSceneStore } from "../store/sceneStore";
 import { useSelectionStore } from "../store/selectionStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useViewportStore } from "../store/viewportStore";
+import { useDocumentStore } from "../store/documentStore";
 import { UpdateDialog } from "./UpdateDialog";
 import { AboutDialog } from "./AboutDialog";
 
@@ -28,6 +29,7 @@ export function MenuBar() {
   const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
   const theme = useSettingsStore((s) => s.theme);
+  const snapEnabled = useViewportStore((s) => s.snapEnabled);
 
   // Silent check on launch: an update found here opens the same dialog as the manual menu
   // action, but a failure (endpoint unreachable, offline, etc.) stays silent — the user didn't
@@ -42,13 +44,19 @@ export function MenuBar() {
       });
   }, []);
 
+  const confirmDiscard = () =>
+    !useDocumentStore.getState().dirty || window.confirm("Les modifications non enregistrées seront perdues. Continuer ?");
+
   const handleNew = () => {
+    if (!confirmDiscard()) return;
     useSceneStore.getState().replaceScene(createEmptyScene());
     useSelectionStore.getState().clear();
     useHistoryStore.getState().clear();
+    useDocumentStore.getState().markSaved(null);
   };
 
   const handleOpen = async () => {
+    if (!confirmDiscard()) return;
     try {
       await openProject();
     } catch (err) {
@@ -58,7 +66,7 @@ export function MenuBar() {
 
   const handleSave = async () => {
     try {
-      await saveProjectAs();
+      await saveProject();
     } catch (err) {
       window.alert(err instanceof Error ? err.message : "Impossible d'enregistrer le projet.");
     }
@@ -103,6 +111,9 @@ export function MenuBar() {
             Ouvrir…
           </button>
           <button className="menu-item" onClick={() => void handleSave()}>
+            Enregistrer (Ctrl+S)
+          </button>
+          <button className="menu-item" onClick={() => void saveProjectAs()}>
             Enregistrer sous…
           </button>
           <hr />
@@ -136,6 +147,12 @@ export function MenuBar() {
         <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={() => useViewportStore.getState().toggleGrid()}>
             Basculer la grille
+          </button>
+          <button
+            className={`menu-item${snapEnabled ? " menu-item-checked" : ""}`}
+            onClick={() => useViewportStore.getState().toggleSnap()}
+          >
+            Magnétisme sur la grille
           </button>
           <button className="menu-item" onClick={() => useViewportStore.getState().setZoom(1)}>
             Réinitialiser le zoom (100%)

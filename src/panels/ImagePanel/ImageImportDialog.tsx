@@ -19,6 +19,13 @@ type ImportMode = "raster" | "vector";
 
 const MAX_PLACEMENT_DIM = 500;
 
+const TRACE_PRESETS: Record<string, TraceOptions> = {
+  "Logo couleur": { ...DEFAULT_TRACE_OPTIONS, colorPrecision: 5, filterSpeckle: 8, layerDifference: 20, pathPrecision: 2 },
+  Silhouette: { ...DEFAULT_TRACE_OPTIONS, colorMode: "binary", hierarchical: "cutout", filterSpeckle: 10, colorPrecision: 2 },
+  "Dessin détaillé": { ...DEFAULT_TRACE_OPTIONS, filterSpeckle: 2, colorPrecision: 7, layerDifference: 8, pathPrecision: 3 },
+  "Découpe / pochoir": { ...DEFAULT_TRACE_OPTIONS, colorMode: "binary", hierarchical: "cutout", mode: "polygon", filterSpeckle: 12, cornerThreshold: 45 },
+};
+
 /**
  * Scale factor to shrink an imported image/trace to a reasonable on-canvas size. Capped by both
  * a fixed max dimension AND a fraction of the target artboard's own size — a small custom
@@ -146,6 +153,16 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
 
             {mode === "vector" && (
               <div className="trace-options">
+                <div className="trace-presets">
+                  <span>Réglages rapides</span>
+                  <div className="prop-row-controls">
+                    {Object.entries(TRACE_PRESETS).map(([name, preset]) => (
+                      <button key={name} type="button" disabled={busy} onClick={() => setOptions({ ...preset })}>
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="trace-row">
                   <label>Mode couleur</label>
                   <select

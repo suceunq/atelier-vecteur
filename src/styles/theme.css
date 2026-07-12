@@ -521,6 +521,27 @@ body,
   margin-top: 8px;
 }
 
+.trace-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.trace-presets > span {
+  color: var(--color-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.trace-presets .prop-row-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
 select,
 input[type="number"],
 input[type="text"] {
@@ -535,4 +556,60 @@ input[type="text"] {
 .trace-options select,
 .trace-options input[type="number"] {
   width: 100%;
+}
+
+.transform-control {
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+.transform-control h4 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.transform-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.transform-field {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.transform-field input {
+  min-width: 0;
+  width: 100%;
+}
+
+.transform-field small {
+  color: var(--color-muted);
+}
+
+.inline-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.status-toggle {
+  border: 0;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.status-toggle.active {
+  color: #3b82f6;
 }

@@ -6,6 +6,7 @@ import { FontControl } from "./FontControl";
 import { OpacityControl } from "./OpacityControl";
 import { StrokeControl } from "./StrokeControl";
 import { commitStyleChange } from "./useStyleCommit";
+import { TransformControl } from "./TransformControl";
 
 export function PropertiesPanel() {
   const selectedIds = useSelectionStore((s) => s.selectedIds);
@@ -29,6 +30,7 @@ export function PropertiesPanel() {
   return (
     <div className="panel properties-panel">
       <h3>Propriétés</h3>
+      {selectedIds.length === 1 && <TransformControl id={firstNode.id} transform={firstNode.transform} />}
       {selectedIds.length === 1 && firstNode.type === "text" && <FontControl node={firstNode} />}
       <FillControl style={style} onChange={handleChange} />
       <StrokeControl style={style} onChange={handleChange} />

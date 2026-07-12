@@ -1,6 +1,7 @@
 import { CanvasViewport } from "../canvas/CanvasViewport";
 import { TextEditOverlay } from "../canvas/TextEditOverlay";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useDocumentSafety } from "../hooks/useDocumentSafety";
 import { AlignPanel } from "../panels/AlignPanel/AlignPanel";
 import { ArtboardPanel } from "../panels/ArtboardPanel/ArtboardPanel";
 import { FiltersPanel } from "../panels/FiltersPanel/FiltersPanel";
@@ -14,6 +15,7 @@ import { Toolbar } from "./Toolbar";
 
 export function Workspace() {
   useKeyboardShortcuts();
+  useDocumentSafety();
 
   return (
     <div className="workspace">

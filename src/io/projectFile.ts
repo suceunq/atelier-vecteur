@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { isPlausibleScene } from "../scene/validate";
 import { useSceneStore } from "../store/sceneStore";
+import { useDocumentStore } from "../store/documentStore";
 
 const FILE_FILTERS = [{ name: "Projet SVG Atelier", extensions: ["svgatelier"] }];
 
@@ -10,6 +11,17 @@ export async function saveProjectAs(): Promise<string | null> {
   if (!path) return null;
   const scene = useSceneStore.getState().scene;
   await invoke("save_project", { path, scene });
+  useDocumentStore.getState().markSaved(path);
+  await invoke("clear_recovery");
+  return path;
+}
+
+export async function saveProject(): Promise<string | null> {
+  const path = useDocumentStore.getState().currentPath;
+  if (!path) return saveProjectAs();
+  await invoke("save_project", { path, scene: useSceneStore.getState().scene });
+  useDocumentStore.getState().markSaved();
+  await invoke("clear_recovery");
   return path;
 }
 
@@ -24,5 +36,7 @@ export async function openProject(): Promise<string | null> {
     throw new Error("Fichier de projet invalide ou corrompu.");
   }
   useSceneStore.getState().replaceScene(result.scene);
+  useDocumentStore.getState().markSaved(path);
+  await invoke("clear_recovery");
   return path;
 }
