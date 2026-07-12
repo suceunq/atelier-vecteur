@@ -3,6 +3,17 @@ import { open } from "@tauri-apps/plugin-dialog";
 
 const IMAGE_FILTERS = [{ name: "Image", extensions: ["png", "jpg", "jpeg", "gif", "webp"] }];
 
+/** Tauri command rejections are commonly plain strings, not JavaScript Error instances. */
+export function importErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+  if (error && typeof error === "object" && "message" in error) {
+    const message = String((error as { message: unknown }).message).trim();
+    if (message) return message;
+  }
+  return fallback;
+}
+
 /** Opens the native file picker restricted to raster image formats. Returns null if cancelled. */
 export async function pickImagePath(): Promise<string | null> {
   const path = await open({ filters: IMAGE_FILTERS, multiple: false });

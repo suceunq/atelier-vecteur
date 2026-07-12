@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createGroup, createImage, createMultiPath } from "../../scene/factory";
 import {
   DEFAULT_TRACE_OPTIONS,
+  importErrorMessage,
   importImageAsDataUri,
   pickImagePath,
   traceImage,
@@ -45,7 +46,7 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
       const picked = await pickImagePath();
       if (picked) setPath(picked);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Impossible d'ouvrir le sélecteur de fichier.");
+      setError(importErrorMessage(err, "Impossible d'ouvrir le sélecteur de fichier."));
     }
   };
 
@@ -101,7 +102,7 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
       }
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Échec de l'import de l'image.");
+      setError(importErrorMessage(err, "Échec de l'import de l'image."));
     } finally {
       setBusy(false);
     }
