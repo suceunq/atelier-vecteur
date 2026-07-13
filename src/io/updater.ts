@@ -12,7 +12,25 @@ export async function checkForUpdates(): Promise<Update | null> {
 }
 
 /** Downloads, installs, and relaunches the app onto the given update — call only after the user has confirmed. */
-export async function installUpdateAndRelaunch(update: Update): Promise<void> {
-  await update.downloadAndInstall();
+export interface UpdateProgress { percent: number; bytesPerSecond: number; secondsRemaining: number | null }
+
+export async function installUpdateAndRelaunch(update: Update, onProgress: (progress: UpdateProgress) => void): Promise<void> {
+  let downloaded = 0;
+  let total = 0;
+  let startedAt = Date.now();
+  await update.downloadAndInstall((event) => {
+    if (event.event === "Started") {
+      total = event.data.contentLength ?? 0;
+      downloaded = 0;
+      startedAt = Date.now();
+    } else if (event.event === "Progress") {
+      downloaded += event.data.chunkLength;
+      const elapsed = Math.max(0.1, (Date.now() - startedAt) / 1000);
+      const bytesPerSecond = downloaded / elapsed;
+      const percent = total > 0 ? Math.min(100, Math.round((downloaded / total) * 100)) : 0;
+      const secondsRemaining = total > 0 && bytesPerSecond > 0 ? Math.max(0, Math.round((total - downloaded) / bytesPerSecond)) : null;
+      onProgress({ percent, bytesPerSecond, secondsRemaining });
+    }
+  });
   await relaunch();
 }

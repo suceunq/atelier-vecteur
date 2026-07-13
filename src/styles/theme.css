@@ -474,6 +474,9 @@ body,
   overflow-y: auto;
 }
 
+.update-download-track { height: 7px; overflow: hidden; border-radius: 8px; background: var(--color-border); }
+.update-download-track span { display: block; height: 100%; background: #6366f1; transition: width .2s ease; }
+
 .image-import-path {
   font-size: 11px;
   color: var(--color-muted);
