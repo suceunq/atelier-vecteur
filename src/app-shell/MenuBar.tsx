@@ -14,6 +14,7 @@ import { useViewportStore } from "../store/viewportStore";
 import { useDocumentStore } from "../store/documentStore";
 import { UpdateDialog } from "./UpdateDialog";
 import { AboutDialog } from "./AboutDialog";
+import { FeedbackDialog } from "./FeedbackDialog";
 
 // Menus are native <details>/<summary> elements, which don't close themselves when an
 // item inside is clicked. Closing the nearest ancestor <details> on any click inside the
@@ -28,6 +29,7 @@ export function MenuBar() {
   const [showImageImportDialog, setShowImageImportDialog] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const theme = useSettingsStore((s) => s.theme);
   const snapEnabled = useViewportStore((s) => s.snapEnabled);
 
@@ -173,6 +175,9 @@ export function MenuBar() {
           <button className="menu-item" onClick={() => void handleCheckForUpdates()}>
             Vérifier les mises à jour…
           </button>
+          <button className="menu-item" onClick={() => setShowFeedbackDialog(true)}>
+            ✉ Suggestion / Correction
+          </button>
           <hr />
           <button className="menu-item" onClick={() => setShowAboutDialog(true)}>
             À propos d’Atelier Vecteur
@@ -184,6 +189,7 @@ export function MenuBar() {
       {showImageImportDialog && <ImageImportDialog onClose={() => setShowImageImportDialog(false)} />}
       {pendingUpdate && <UpdateDialog update={pendingUpdate} onClose={() => setPendingUpdate(null)} />}
       {showAboutDialog && <AboutDialog onClose={() => setShowAboutDialog(false)} />}
+      {showFeedbackDialog && <FeedbackDialog onClose={() => setShowFeedbackDialog(false)} />}
     </div>
   );
 }
