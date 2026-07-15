@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "Correction du système de mise à jour et ajout du suivi de téléchargement.",
+    notes: "Ajout du formulaire Suggestion / Correction avec message préparé et copie de secours.",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {
