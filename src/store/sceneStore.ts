@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { createEmptyScene, createLayer } from "../scene/factory";
+import { refreshGroupBounds } from "../scene/geometry";
 import type {
   Artboard,
   ArtboardId,
@@ -86,6 +87,7 @@ export const useSceneStore = create<SceneState>()(
       set((state) => {
         const el = state.scene.elements[id];
         if (el) Object.assign(el.transform, transform);
+        refreshGroupBounds(state.scene as Scene);
       }),
 
     updateElementStyle: (id, style) =>
@@ -98,6 +100,7 @@ export const useSceneStore = create<SceneState>()(
       set((state) => {
         const el = state.scene.elements[id];
         if (el) Object.assign(el, patch);
+        refreshGroupBounds(state.scene as Scene);
       }),
 
     addGradient: (gradient) =>
@@ -251,6 +254,7 @@ export const useSceneStore = create<SceneState>()(
     replaceScene: (scene) =>
       set((state) => {
         state.scene = scene;
+        refreshGroupBounds(state.scene as Scene);
       }),
   }))
 );

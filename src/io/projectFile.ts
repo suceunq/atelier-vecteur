@@ -5,6 +5,7 @@ import { useSceneStore } from "../store/sceneStore";
 import { useDocumentStore } from "../store/documentStore";
 
 const FILE_FILTERS = [{ name: "Projet SVG Atelier", extensions: ["svgatelier"] }];
+const CURRENT_FORMAT_VERSION = 1;
 
 export async function saveProjectAs(): Promise<string | null> {
   const path = await save({ filters: FILE_FILTERS, defaultPath: "sans-titre.svgatelier" });
@@ -32,6 +33,12 @@ export async function openProject(): Promise<string | null> {
     "load_project",
     { path }
   );
+  if (!Number.isInteger(result.manifest?.format_version) || result.manifest.format_version < 1) {
+    throw new Error("Version de fichier de projet invalide.");
+  }
+  if (result.manifest.format_version > CURRENT_FORMAT_VERSION) {
+    throw new Error("Ce projet a été créé avec une version plus récente d’Atelier Vecteur. Mettez l’application à jour pour l’ouvrir.");
+  }
   if (!isPlausibleScene(result.scene)) {
     throw new Error("Fichier de projet invalide ou corrompu.");
   }

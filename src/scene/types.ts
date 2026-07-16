@@ -94,13 +94,7 @@ export interface TextNode extends BaseNode {
 export interface GroupNode extends BaseNode {
   type: "group";
   childIds: ElementId[];
-  /**
-   * Union bbox of the children at the moment the group was created, in the group's local space
-   * (children keep their pre-existing world coordinates as their local-to-group coordinates,
-   * since a freshly created group starts at an identity transform). Used for selection-handle
-   * sizing; not recomputed automatically if a child is edited afterward while inside the group
-   * (a known, disclosed simplification).
-   */
+  /** Union bbox of the children in the group's local space, refreshed by scene mutations. */
   bounds: { x: number; y: number; width: number; height: number };
 }
 

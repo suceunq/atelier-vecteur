@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createEllipse, createGroup, createRect } from "./factory";
+import { createEllipse, createEmptyScene, createGroup, createRect } from "./factory";
 import {
   localBBox,
   localCenter,
   localToWorldPoint,
   rotatedOutlineCorners,
+  refreshGroupBounds,
   unionBBox,
   worldBBox,
   worldHandlePosition,
@@ -102,5 +103,18 @@ describe("unionBBox", () => {
     const a = { x: 0, y: 0, width: 10, height: 10 };
     const b = { x: 20, y: 5, width: 10, height: 10 };
     expect(unionBBox([a, b])).toEqual({ x: 0, y: 0, width: 30, height: 15 });
+  });
+});
+
+describe("refreshGroupBounds", () => {
+  it("updates a group after a child moves", () => {
+    const first = createRect(0, 0, 10, 10);
+    const second = createRect(20, 0, 10, 10);
+    const group = createGroup([first, second]);
+    const scene = createEmptyScene();
+    scene.elements = { [first.id]: first, [second.id]: second, [group.id]: group };
+    second.transform.x = 40;
+    refreshGroupBounds(scene);
+    expect(group.bounds).toEqual({ x: 0, y: 0, width: 50, height: 10 });
   });
 });

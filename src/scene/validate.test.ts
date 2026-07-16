@@ -54,4 +54,31 @@ describe("isPlausibleScene", () => {
       })
     ).toBe(false);
   });
+
+  it("rejects dangling element references", () => {
+    const scene = createEmptyScene();
+    scene.layers[0].elementIds.push("missing");
+    expect(isPlausibleScene(scene)).toBe(false);
+  });
+
+  it("rejects invalid dimensions and non-finite numbers", () => {
+    const scene = createEmptyScene();
+    scene.artboards[0].width = 0;
+    expect(isPlausibleScene(scene)).toBe(false);
+    scene.artboards[0].width = Number.NaN;
+    expect(isPlausibleScene(scene)).toBe(false);
+  });
+
+  it("rejects cyclic groups", () => {
+    const scene = createEmptyScene();
+    const base = {
+      transform: { x: 0, y: 0, rotation: 0, scaleX: 1, scaleY: 1 },
+      style: { fill: "none", fillOpacity: 1, stroke: "none", strokeWidth: 0, strokeOpacity: 1, strokeDasharray: null, opacity: 1, filter: null, fillRule: "nonzero" as const },
+      bounds: { x: 0, y: 0, width: 1, height: 1 },
+    };
+    scene.elements.a = { ...base, id: "a", type: "group", childIds: ["b"] };
+    scene.elements.b = { ...base, id: "b", type: "group", childIds: ["a"] };
+    scene.layers[0].elementIds.push("a");
+    expect(isPlausibleScene(scene)).toBe(false);
+  });
 });

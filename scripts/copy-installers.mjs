@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "Ajout du formulaire Suggestion / Correction avec message préparé et copie de secours.",
+    notes: "Validation renforcée des projets, documentation complète et recalcul fiable des limites de groupes.",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {
