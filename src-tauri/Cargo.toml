@@ -1,8 +1,8 @@
 [package]
 name = "svg-atelier"
 version = "0.2.4"
-description = "A Tauri App"
-authors = ["you"]
+description = "Éditeur graphique vectoriel de bureau"
+authors = ["Atelier Vecteur"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -1,7 +1,7 @@
 import { controlPolygonBBox } from "./bezier";
 import { safeNumber } from "./sanitize";
 import { rotatePoint } from "../utils/matrix";
-import type { Point, SceneNode } from "./types";
+import type { Point, Scene, SceneNode } from "./types";
 
 /** Rough width-per-character factor for the approximate text bbox (no DOM measurement available in pure geometry code). */
 const TEXT_CHAR_WIDTH_FACTOR = 0.56;
@@ -173,6 +173,18 @@ export function unionBBox(boxes: BBox[]): BBox | null {
   const maxX = Math.max(...boxes.map((b) => b.x + b.width));
   const maxY = Math.max(...boxes.map((b) => b.y + b.height));
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+}
+
+/** Refreshes cached group bounds after child geometry or transforms change. */
+export function refreshGroupBounds(scene: Scene): void {
+  const groups = Object.values(scene.elements).filter((node) => node.type === "group");
+  // Several passes also settle nested groups, while validation prevents cyclic references on load.
+  for (let pass = 0; pass < groups.length; pass += 1) {
+    for (const group of groups) {
+      const children = group.childIds.map((id) => scene.elements[id]).filter((node): node is SceneNode => Boolean(node));
+      group.bounds = unionBBox(children.map(worldBBox)) ?? { x: 0, y: 0, width: 0, height: 0 };
+    }
+  }
 }
 
 export function bboxIntersects(a: BBox, b: BBox): boolean {
