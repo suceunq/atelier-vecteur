@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "Validation renforcée des projets, documentation complète et recalcul fiable des limites de groupes.",
+    notes: "L’installateur et le désinstalleur utilisent désormais l’icône officielle d’Atelier Vecteur.",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {
