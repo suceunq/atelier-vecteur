@@ -24,9 +24,9 @@ Tous les nouveaux textes visibles doivent être ajoutés aux quatre catalogues d
 
 ## Configuration des dons
 
-Le bouton de don n’accepte que les adresses HTTPS officielles `paypal.com` et `paypal.me`. Le lien partagé par défaut se trouve dans `public/runtime-config.json`. L’application relit automatiquement ce fichier depuis la branche `master` sur GitHub au démarrage : modifier puis publier uniquement ce fichier suffit donc à changer la destination pour tous les utilisateurs, sans recompiler ni republier l’installateur.
+Le bouton de don n’accepte que les adresses HTTPS officielles `paypal.com` et `paypal.me`. Son adresse n’est ni affichée ni modifiable dans les paramètres de l’application. Seul le responsable du projet peut la changer dans `public/runtime-config.json` sur la branche `master` de GitHub ; l’application relit automatiquement cette configuration au démarrage, sans qu’il soit nécessaire de recompiler l’installateur.
 
-Chaque installation peut également définir un remplacement local dans **Affichage > Paramètres > Soutien du projet**. Un champ vide utilise le lien partagé. Si l’application est hors ligne, le remplacement local continue de fonctionner ; sans remplacement, le bouton reste désactivé jusqu’à ce que la configuration partagée soit accessible.
+Une copie officielle de cette configuration est intégrée à l’application pour que le bouton reste disponible hors ligne. Les anciennes valeurs locales éventuellement enregistrées par une version précédente sont supprimées et ignorées.
 
 ## Développement
 

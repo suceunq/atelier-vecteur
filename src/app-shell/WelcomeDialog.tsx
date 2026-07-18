@@ -7,10 +7,9 @@ import { useSettingsStore } from "../store/settingsStore";
 
 interface WelcomeDialogProps {
   onClose: () => void;
-  onConfigureDonation: () => void;
 }
 
-export function WelcomeDialog({ onClose, onConfigureDonation }: WelcomeDialogProps) {
+export function WelcomeDialog({ onClose }: WelcomeDialogProps) {
   const { t } = useI18n();
   const donationUrl = useSettingsStore((state) => state.donationUrl);
   const showOnStartup = useSettingsStore((state) => state.showWelcomeOnStartup);
@@ -47,7 +46,7 @@ export function WelcomeDialog({ onClose, onConfigureDonation }: WelcomeDialogPro
           <div className="welcome-support-icon" aria-hidden="true">♥</div>
           <div><h3>{t("welcome.supportTitle")}</h3><p>{t("welcome.supportText")}</p></div>
         </div>
-        {!validDonationUrl && <p className="welcome-config-notice">{t("welcome.notConfigured")} <button onClick={onConfigureDonation}>{t("welcome.configure")}</button></p>}
+        {!validDonationUrl && <p className="welcome-config-notice">{t("welcome.notConfigured")}</p>}
         {error && <p className="image-import-error" role="alert">{error}</p>}
         <label className="welcome-startup"><input type="checkbox" checked={showOnStartup} onChange={(event) => useSettingsStore.getState().setShowWelcomeOnStartup(event.target.checked)} />{t("welcome.showOnStartup")}</label>
         <div className="welcome-actions">
