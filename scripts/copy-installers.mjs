@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "Les mises à jour sont désormais entièrement automatiques, comme les autres logiciels : recherche en arrière-plan, téléchargement et installation sans confirmation à donner. L'installation attend qu'il n'y ait plus de modification non enregistrée avant de redémarrer, pour ne jamais perdre de travail en cours. Une petite fenêtre apparaît brièvement (~3 secondes) au début du téléchargement pour l'indiquer.",
+    notes: "Ajoute les opérations booléennes (union, soustraction, intersection, exclusion) entre formes sélectionnées, dans un nouveau panneau à côté de l'alignement.",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {

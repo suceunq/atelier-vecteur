@@ -1,7 +1,7 @@
 {
   "name": "atelier-vecteur",
   "private": true,
-  "version": "0.3.6",
+  "version": "0.3.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -21,6 +21,7 @@
     "culori": "^4.0.2",
     "immer": "^11.1.11",
     "nanoid": "^5.1.16",
+    "polybooljs": "^1.2.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zustand": "^5.0.14"

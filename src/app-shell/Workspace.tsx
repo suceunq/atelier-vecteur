@@ -3,6 +3,7 @@ import { TextEditOverlay } from "../canvas/TextEditOverlay";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useDocumentSafety } from "../hooks/useDocumentSafety";
 import { AlignPanel } from "../panels/AlignPanel/AlignPanel";
+import { BooleanPanel } from "../panels/BooleanPanel/BooleanPanel";
 import { ArtboardPanel } from "../panels/ArtboardPanel/ArtboardPanel";
 import { FiltersPanel } from "../panels/FiltersPanel/FiltersPanel";
 import { GradientPanel } from "../panels/GradientPanel/GradientPanel";
@@ -41,6 +42,7 @@ export function Workspace() {
           <PatternPanel />
           <FiltersPanel />
           <AlignPanel />
+          <BooleanPanel />
           <LayersPanel />
           <ArtboardPanel />
         </div>
