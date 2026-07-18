@@ -16,6 +16,7 @@ import { UpdateDialog } from "./UpdateDialog";
 import { AboutDialog } from "./AboutDialog";
 import { FeedbackDialog } from "./FeedbackDialog";
 import { SettingsDialog } from "./SettingsDialog";
+import { WelcomeDialog } from "./WelcomeDialog";
 import { localizedError } from "../i18n";
 import { useI18n } from "../i18n/useI18n";
 
@@ -35,6 +36,7 @@ export function MenuBar() {
   const [showAboutDialog, setShowAboutDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showWelcomeDialog, setShowWelcomeDialog] = useState(() => useSettingsStore.getState().showWelcomeOnStartup);
   const theme = useSettingsStore((s) => s.theme);
   const snapEnabled = useViewportStore((s) => s.snapEnabled);
 
@@ -181,6 +183,9 @@ export function MenuBar() {
           <button className="menu-item" onClick={() => void handleCheckForUpdates()}>
             {t("menu.checkUpdates")}
           </button>
+          <button className="menu-item" onClick={() => setShowWelcomeDialog(true)}>
+            {t("menu.welcome")}
+          </button>
           <button className="menu-item" onClick={() => setShowFeedbackDialog(true)}>
             ✉ {t("menu.feedback")}
           </button>
@@ -193,10 +198,11 @@ export function MenuBar() {
 
       {showPngDialog && <ExportPngDialog onClose={() => setShowPngDialog(false)} />}
       {showImageImportDialog && <ImageImportDialog onClose={() => setShowImageImportDialog(false)} />}
-      {pendingUpdate && <UpdateDialog update={pendingUpdate} onClose={() => setPendingUpdate(null)} />}
+      {pendingUpdate && !showWelcomeDialog && <UpdateDialog update={pendingUpdate} onClose={() => setPendingUpdate(null)} />}
       {showAboutDialog && <AboutDialog onClose={() => setShowAboutDialog(false)} />}
       {showFeedbackDialog && <FeedbackDialog onClose={() => setShowFeedbackDialog(false)} />}
       {showSettingsDialog && <SettingsDialog onClose={() => setShowSettingsDialog(false)} />}
+      {showWelcomeDialog && <WelcomeDialog onClose={() => setShowWelcomeDialog(false)} onConfigureDonation={() => { setShowWelcomeDialog(false); setShowSettingsDialog(true); }} />}
     </div>
   );
 }
