@@ -1,26 +1,23 @@
 import type { Style } from "../../scene/types";
+import { useI18n } from "../../i18n/useI18n";
 
 interface Props {
   style: Style;
   onChange: (patch: Partial<Style>) => void;
 }
 
-const DASH_PRESETS: { label: string; value: string | null }[] = [
-  { label: "Continu", value: null },
-  { label: "Tirets", value: "6 4" },
-  { label: "Pointillés", value: "1 4" },
-];
-
 export function StrokeControl({ style, onChange }: Props) {
+  const { t } = useI18n();
+  const presets = [{ label: t("panel.solid"), value: null }, { label: t("panel.dashed"), value: "6 4" }, { label: t("panel.dotted"), value: "1 4" }];
   const isNone = style.stroke === "none";
   return (
     <div className="prop-row">
-      <label>Contour</label>
+      <label>{t("panel.stroke")}</label>
       <div className="prop-row-controls">
         <input
           type="checkbox"
           checked={!isNone}
-          title="Activer le contour"
+          title={t("panel.enableStroke")}
           onChange={(e) => onChange({ stroke: e.target.checked ? "#1e293b" : "none" })}
         />
         <input
@@ -42,7 +39,7 @@ export function StrokeControl({ style, onChange }: Props) {
           disabled={isNone}
           onChange={(e) => onChange({ strokeDasharray: e.target.value || null })}
         >
-          {DASH_PRESETS.map((preset) => (
+          {presets.map((preset) => (
             <option key={preset.label} value={preset.value ?? ""}>
               {preset.label}
             </option>

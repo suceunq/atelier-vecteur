@@ -3,19 +3,22 @@ import type { Artboard } from "../../scene/types";
 import { GenericCommand } from "../../store/commands/GenericCommand";
 import { useHistoryStore } from "../../store/historyStore";
 import { useSceneStore } from "../../store/sceneStore";
+import { t } from "../../i18n";
+import { useI18n } from "../../i18n/useI18n";
 
 const GAP = 40;
 
 export function ArtboardPanel() {
+  const { t: tr } = useI18n();
   const artboards = useSceneStore((s) => s.scene.artboards);
 
   const addArtboard = () => {
     const last = artboards[artboards.length - 1];
     const x = last ? last.x + last.width + GAP : 0;
-    const artboard = createArtboard(`Artboard ${artboards.length + 1}`, x, last?.y ?? 0);
+    const artboard = createArtboard(t("artboard.defaultName", { number: artboards.length + 1 }), x, last?.y ?? 0);
     useHistoryStore.getState().execute(
       new GenericCommand(
-        "Ajouter un artboard",
+        t("command.addArtboard"),
         () => useSceneStore.getState().addArtboard(artboard),
         () => useSceneStore.getState().removeArtboard(artboard.id)
       )
@@ -26,7 +29,7 @@ export function ArtboardPanel() {
     if (artboards.length <= 1) return;
     useHistoryStore.getState().execute(
       new GenericCommand(
-        "Supprimer l'artboard",
+        t("command.deleteArtboard"),
         () => useSceneStore.getState().removeArtboard(artboard.id),
         () => useSceneStore.getState().addArtboard(artboard)
       )
@@ -37,7 +40,7 @@ export function ArtboardPanel() {
     const before = { ...artboard };
     useHistoryStore.getState().execute(
       new GenericCommand(
-        "Modifier l'artboard",
+        t("command.editArtboard"),
         () => useSceneStore.getState().updateArtboard(artboard.id, patch),
         () => useSceneStore.getState().updateArtboard(artboard.id, before)
       )
@@ -47,8 +50,8 @@ export function ArtboardPanel() {
   return (
     <div className="panel artboard-panel">
       <div className="panel-header">
-        <h3>Artboards</h3>
-        <button className="icon-button" title="Ajouter un artboard" onClick={addArtboard}>
+        <h3>{tr("artboard.title")}</h3>
+        <button className="icon-button" title={tr("artboard.add")} onClick={addArtboard}>
           +
         </button>
       </div>
@@ -75,7 +78,7 @@ export function ArtboardPanel() {
             <button
               className="icon-button"
               disabled={artboards.length <= 1}
-              title="Supprimer l'artboard"
+              title={tr("artboard.delete")}
               onClick={() => removeArtboardAt(artboard)}
             >
               🗑

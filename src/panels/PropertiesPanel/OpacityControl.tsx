@@ -1,4 +1,5 @@
 import type { Style } from "../../scene/types";
+import { useI18n } from "../../i18n/useI18n";
 
 interface Props {
   style: Style;
@@ -6,9 +7,10 @@ interface Props {
 }
 
 export function OpacityControl({ style, onChange }: Props) {
+  const { t } = useI18n();
   return (
     <div className="prop-row">
-      <label>Opacité</label>
+      <label>{t("panel.opacity")}</label>
       <div className="prop-row-controls">
         <input
           type="number"

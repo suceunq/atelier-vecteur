@@ -4,6 +4,7 @@ import { TransformCommand } from "../../store/commands/TransformCommand";
 import { useHistoryStore } from "../../store/historyStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
+import { useI18n } from "../../i18n/useI18n";
 
 type AlignEdge = "left" | "right" | "top" | "bottom" | "center-h" | "center-v";
 type DistributeAxis = "horizontal" | "vertical";
@@ -105,38 +106,39 @@ function distribute(axis: DistributeAxis) {
 }
 
 export function AlignPanel() {
+  const { t } = useI18n();
   const selectedIds = useSelectionStore((s) => s.selectedIds);
   const canAlign = selectedIds.length >= 2;
   const canDistribute = selectedIds.length >= 3;
 
   return (
     <div className="panel align-panel">
-      <h3>Alignement</h3>
+      <h3>{t("align.title")}</h3>
       <div className="align-buttons">
-        <button disabled={!canAlign} title="Aligner à gauche" onClick={() => align("left")}>
+        <button disabled={!canAlign} title={t("align.left")} onClick={() => align("left")}>
           ⯇
         </button>
-        <button disabled={!canAlign} title="Centrer horizontalement" onClick={() => align("center-h")}>
+        <button disabled={!canAlign} title={t("align.centerH")} onClick={() => align("center-h")}>
           ⯀
         </button>
-        <button disabled={!canAlign} title="Aligner à droite" onClick={() => align("right")}>
+        <button disabled={!canAlign} title={t("align.right")} onClick={() => align("right")}>
           ⯈
         </button>
-        <button disabled={!canAlign} title="Aligner en haut" onClick={() => align("top")}>
+        <button disabled={!canAlign} title={t("align.top")} onClick={() => align("top")}>
           ⯅
         </button>
-        <button disabled={!canAlign} title="Centrer verticalement" onClick={() => align("center-v")}>
+        <button disabled={!canAlign} title={t("align.centerV")} onClick={() => align("center-v")}>
           ⬤
         </button>
-        <button disabled={!canAlign} title="Aligner en bas" onClick={() => align("bottom")}>
+        <button disabled={!canAlign} title={t("align.bottom")} onClick={() => align("bottom")}>
           ⯆
         </button>
       </div>
       <div className="align-buttons">
-        <button disabled={!canDistribute} title="Distribuer horizontalement" onClick={() => distribute("horizontal")}>
+        <button disabled={!canDistribute} title={t("align.distributeH")} onClick={() => distribute("horizontal")}>
           ⇔
         </button>
-        <button disabled={!canDistribute} title="Distribuer verticalement" onClick={() => distribute("vertical")}>
+        <button disabled={!canDistribute} title={t("align.distributeV")} onClick={() => distribute("vertical")}>
           ⇕
         </button>
       </div>

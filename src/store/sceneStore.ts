@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { createEmptyScene, createLayer } from "../scene/factory";
 import { refreshGroupBounds } from "../scene/geometry";
+import { t } from "../i18n";
 import type {
   Artboard,
   ArtboardId,
@@ -169,7 +170,7 @@ export const useSceneStore = create<SceneState>()(
       }),
 
     addLayer: (name) => {
-      const layer = createLayer(name ?? `Calque ${get().scene.layers.length + 1}`);
+      const layer = createLayer(name ?? t("layer.defaultName", { number: get().scene.layers.length + 1 }));
       set((state) => {
         state.scene.layers.push(layer);
       });

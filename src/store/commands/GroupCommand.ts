@@ -1,6 +1,7 @@
 import type { ElementId, GroupNode, LayerId } from "../../scene/types";
 import { useSceneStore } from "../sceneStore";
 import type { Command } from "./Command";
+import { t } from "../../i18n";
 
 interface ChildPosition {
   id: ElementId;
@@ -18,7 +19,7 @@ function captureChildPositions(childIds: ElementId[], fallbackLayerId: LayerId):
 
 /** Groups a set of elements under a new GroupNode — undo restores each child to its original layer/position. */
 export class GroupCommand implements Command {
-  label = "Grouper";
+  label = t("command.group");
   private childPositions: ChildPosition[];
 
   constructor(

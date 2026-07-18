@@ -164,10 +164,7 @@ pub fn text_to_path(
     collect_paths(tree.root(), &mut subpaths);
 
     if subpaths.is_empty() {
-        return Err(
-            "Conversion en tracé indisponible : aucun contour produit pour cette police/ce texte."
-                .to_string(),
-        );
+        return Err("i18n:text.no_contours".to_string());
     }
 
     Ok(subpaths)

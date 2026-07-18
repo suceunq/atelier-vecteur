@@ -7,16 +7,17 @@ import { OpacityControl } from "./OpacityControl";
 import { StrokeControl } from "./StrokeControl";
 import { commitStyleChange } from "./useStyleCommit";
 import { TransformControl } from "./TransformControl";
+import { useI18n } from "../../i18n/useI18n";
 
 export function PropertiesPanel() {
+  const { t } = useI18n();
   const selectedIds = useSelectionStore((s) => s.selectedIds);
   const scene = useSceneStore((s) => s.scene);
 
   if (selectedIds.length === 0) {
     return (
       <div className="panel properties-panel">
-        <h3>Propriétés</h3>
-        <p className="panel-empty">Sélectionnez une forme pour modifier ses propriétés.</p>
+        <h3>{t("panel.properties")}</h3><p className="panel-empty">{t("panel.selectHint")}</p>
       </div>
     );
   }
@@ -29,7 +30,7 @@ export function PropertiesPanel() {
 
   return (
     <div className="panel properties-panel">
-      <h3>Propriétés</h3>
+      <h3>{t("panel.properties")}</h3>
       {selectedIds.length === 1 && <TransformControl id={firstNode.id} transform={firstNode.transform} />}
       {selectedIds.length === 1 && firstNode.type === "text" && <FontControl node={firstNode} />}
       <FillControl style={style} onChange={handleChange} />

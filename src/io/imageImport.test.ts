@@ -2,14 +2,11 @@ import { describe, expect, it } from "vitest";
 import { importErrorMessage } from "./imageImport";
 
 describe("importErrorMessage", () => {
-  it("preserves a plain-text Tauri rejection", () => {
+  it("does not expose untranslated Tauri or library rejections", () => {
     expect(importErrorMessage("Image trop complexe : réduisez la précision.", "Erreur générique"))
-      .toBe("Image trop complexe : réduisez la précision.");
-  });
-
-  it("preserves JavaScript and object error messages", () => {
-    expect(importErrorMessage(new Error("Décodage impossible"), "Erreur générique")).toBe("Décodage impossible");
-    expect(importErrorMessage({ message: "Format invalide" }, "Erreur générique")).toBe("Format invalide");
+      .toBe("Erreur générique");
+    expect(importErrorMessage(new Error("Decode failed"), "Erreur générique")).toBe("Erreur générique");
+    expect(importErrorMessage({ message: "Invalid format" }, "Erreur générique")).toBe("Erreur générique");
   });
 
   it("uses the fallback for empty or unknown errors", () => {

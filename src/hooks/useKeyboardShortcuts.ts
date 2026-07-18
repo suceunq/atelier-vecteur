@@ -13,6 +13,7 @@ import { useSelectionStore } from "../store/selectionStore";
 import { useToolStore } from "../store/toolStore";
 import type { ToolId } from "../tools/ToolManager";
 import { saveProject } from "../io/projectFile";
+import { localizedError } from "../i18n";
 
 const PASTE_OFFSET = 20;
 
@@ -46,7 +47,7 @@ export function useKeyboardShortcuts() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
         void saveProject().catch((error) =>
-          window.alert(error instanceof Error ? error.message : "Échec de l’enregistrement.")
+          window.alert(localizedError(error, "error.save"))
         );
         return;
       }

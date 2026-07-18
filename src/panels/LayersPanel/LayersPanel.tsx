@@ -3,15 +3,18 @@ import { createLayer } from "../../scene/factory";
 import { useHistoryStore } from "../../store/historyStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { LayerRow } from "./LayerRow";
+import { t } from "../../i18n";
+import { useI18n } from "../../i18n/useI18n";
 
 export function LayersPanel() {
+  const { t: tr } = useI18n();
   const layers = useSceneStore((s) => s.scene.layers);
 
   const addLayer = () => {
-    const layer = createLayer(`Calque ${layers.length + 1}`);
+    const layer = createLayer(t("layer.defaultName", { number: layers.length + 1 }));
     useHistoryStore.getState().execute(
       new GenericCommand(
-        "Ajouter un calque",
+        t("command.addLayer"),
         () => useSceneStore.setState((state) => ({ scene: { ...state.scene, layers: [...state.scene.layers, layer] } })),
         () =>
           useSceneStore.setState((state) => ({
@@ -27,8 +30,7 @@ export function LayersPanel() {
   return (
     <div className="panel layers-panel">
       <div className="panel-header">
-        <h3>Calques</h3>
-        <button className="icon-button" title="Ajouter un calque" onClick={addLayer}>
+        <h3>{tr("layer.title")}</h3><button className="icon-button" title={tr("layer.add")} onClick={addLayer}>
           +
         </button>
       </div>

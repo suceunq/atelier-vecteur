@@ -14,17 +14,19 @@ import { AddElementsCommand } from "../../store/commands/AddElementsCommand";
 import { useHistoryStore } from "../../store/historyStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
+import { localizedError, t, type MessageKey } from "../../i18n";
+import { useI18n } from "../../i18n/useI18n";
 
 type ImportMode = "raster" | "vector";
 
 const MAX_PLACEMENT_DIM = 500;
 
-const TRACE_PRESETS: Record<string, TraceOptions> = {
-  "Logo couleur": { ...DEFAULT_TRACE_OPTIONS, colorPrecision: 5, filterSpeckle: 8, layerDifference: 20, pathPrecision: 2 },
-  Silhouette: { ...DEFAULT_TRACE_OPTIONS, colorMode: "binary", hierarchical: "cutout", filterSpeckle: 10, colorPrecision: 2 },
-  "Dessin détaillé": { ...DEFAULT_TRACE_OPTIONS, filterSpeckle: 2, colorPrecision: 7, layerDifference: 8, pathPrecision: 3 },
-  "Découpe / pochoir": { ...DEFAULT_TRACE_OPTIONS, colorMode: "binary", hierarchical: "cutout", mode: "polygon", filterSpeckle: 12, cornerThreshold: 45 },
-};
+const TRACE_PRESETS: { label: MessageKey; options: TraceOptions }[] = [
+  { label: "image.presetLogo", options: { ...DEFAULT_TRACE_OPTIONS, colorPrecision: 5, filterSpeckle: 8, layerDifference: 20, pathPrecision: 2 } },
+  { label: "image.presetSilhouette", options: { ...DEFAULT_TRACE_OPTIONS, colorMode: "binary", hierarchical: "cutout", filterSpeckle: 10, colorPrecision: 2 } },
+  { label: "image.presetDetailed", options: { ...DEFAULT_TRACE_OPTIONS, filterSpeckle: 2, colorPrecision: 7, layerDifference: 8, pathPrecision: 3 } },
+  { label: "image.presetStencil", options: { ...DEFAULT_TRACE_OPTIONS, colorMode: "binary", hierarchical: "cutout", mode: "polygon", filterSpeckle: 12, cornerThreshold: 45 } },
+];
 
 /**
  * Scale factor to shrink an imported image/trace to a reasonable on-canvas size. Capped by both
@@ -39,6 +41,7 @@ function fitScale(maxDim: number, artboard: { width: number; height: number }): 
 }
 
 export function ImageImportDialog({ onClose }: { onClose: () => void }) {
+  const { t: tr } = useI18n();
   const [path, setPath] = useState<string | null>(null);
   const [mode, setMode] = useState<ImportMode>("raster");
   const [options, setOptions] = useState<TraceOptions>(DEFAULT_TRACE_OPTIONS);
@@ -53,7 +56,7 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
       const picked = await pickImagePath();
       if (picked) setPath(picked);
     } catch (err) {
-      setError(importErrorMessage(err, "Impossible d'ouvrir le sélecteur de fichier."));
+      setError(importErrorMessage(err, tr("error.filePicker")));
     }
   };
 
@@ -76,13 +79,13 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
         const x = artboard.x + (artboard.width - w) / 2;
         const y = artboard.y + (artboard.height - h) / 2;
         const node = createImage(x, y, dataUri, w, h);
-        useHistoryStore.getState().execute(new AddElementsCommand([node], undefined, "Importer une image"));
+        useHistoryStore.getState().execute(new AddElementsCommand([node], undefined, t("command.importImage")));
         useSelectionStore.getState().select([node.id]);
       } else {
         const svg = await traceImage(path, options);
         const shapes = parseTracedSvg(svg);
         if (shapes.length === 0) {
-          setError("Le tracé n'a produit aucune forme exploitable.");
+          setError(tr("error.traceEmpty"));
           setBusy(false);
           return;
         }
@@ -104,12 +107,12 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
         const childOnlyIds = new Set<ElementId>(pathNodes.map((n) => n.id));
         useHistoryStore
           .getState()
-          .execute(new AddElementsCommand([...pathNodes, group], undefined, "Tracer l'image", childOnlyIds));
+          .execute(new AddElementsCommand([...pathNodes, group], undefined, t("command.traceImage"), childOnlyIds));
         useSelectionStore.getState().select([group.id]);
       }
       onClose();
     } catch (err) {
-      setError(importErrorMessage(err, "Échec de l'import de l'image."));
+      setError(localizedError(err, "error.imageImport"));
     } finally {
       setBusy(false);
     }
@@ -118,10 +121,10 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
   return (
     <div className="dialog-overlay" onClick={onClose}>
       <div className="dialog image-import-dialog" onClick={(e) => e.stopPropagation()}>
-        <h3>Importer une image</h3>
+        <h3>{tr("image.title")}</h3>
 
         {!path ? (
-          <button onClick={() => void handlePick()}>Choisir un fichier…</button>
+          <button onClick={() => void handlePick()}>{tr("image.choose")}</button>
         ) : (
           <>
             <p className="image-import-path" title={path}>
@@ -134,65 +137,61 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
                 onClick={() => setMode("raster")}
                 disabled={busy}
               >
-                Image (SVG)
+                {tr("image.raster")}
               </button>
               <button
                 className={mode === "vector" ? "primary" : ""}
                 onClick={() => setMode("vector")}
                 disabled={busy}
               >
-                Vectoriel (tracé)
+                {tr("image.vector")}
               </button>
             </div>
 
             {mode === "raster" && (
               <p className="image-import-hint">
-                L'image est intégrée telle quelle dans le SVG (encodée en base64).
+                {tr("image.rasterHint")}
               </p>
             )}
 
             {mode === "vector" && (
               <div className="trace-options">
                 <div className="trace-presets">
-                  <span>Réglages rapides</span>
+                  <span>{tr("image.quickSettings")}</span>
                   <div className="prop-row-controls">
-                    {Object.entries(TRACE_PRESETS).map(([name, preset]) => (
-                      <button key={name} type="button" disabled={busy} onClick={() => setOptions({ ...preset })}>
-                        {name}
+                    {TRACE_PRESETS.map((preset) => (
+                      <button key={preset.label} type="button" disabled={busy} onClick={() => setOptions({ ...preset.options })}>
+                        {tr(preset.label)}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div className="trace-row">
-                  <label>Mode couleur</label>
+                  <label>{tr("image.colorMode")}</label>
                   <select
                     value={options.colorMode}
                     onChange={(e) => patch({ colorMode: e.target.value as TraceOptions["colorMode"] })}
                   >
-                    <option value="color">Couleur</option>
-                    <option value="binary">Noir et blanc</option>
+                    <option value="color">{tr("image.color")}</option><option value="binary">{tr("image.blackWhite")}</option>
                   </select>
                 </div>
                 <div className="trace-row">
-                  <label>Style de tracé</label>
+                  <label>{tr("image.traceStyle")}</label>
                   <select value={options.mode} onChange={(e) => patch({ mode: e.target.value as TraceOptions["mode"] })}>
-                    <option value="spline">Courbes</option>
-                    <option value="polygon">Polygones</option>
-                    <option value="none">Pixels (brut)</option>
+                    <option value="spline">{tr("image.curves")}</option><option value="polygon">{tr("image.polygons")}</option><option value="none">{tr("image.pixels")}</option>
                   </select>
                 </div>
                 <div className="trace-row">
-                  <label>Calques</label>
+                  <label>{tr("image.layers")}</label>
                   <select
                     value={options.hierarchical}
                     onChange={(e) => patch({ hierarchical: e.target.value as TraceOptions["hierarchical"] })}
                   >
-                    <option value="stacked">Empilés</option>
-                    <option value="cutout">Découpés</option>
+                    <option value="stacked">{tr("image.stacked")}</option><option value="cutout">{tr("image.cutout")}</option>
                   </select>
                 </div>
                 <div className="trace-row">
-                  <label>Précision des couleurs</label>
+                  <label>{tr("image.colorPrecision")}</label>
                   <input
                     type="number"
                     min={1}
@@ -202,7 +201,7 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
                   />
                 </div>
                 <div className="trace-row">
-                  <label>Filtrer le bruit (px)</label>
+                  <label>{tr("image.noise")}</label>
                   <input
                     type="number"
                     min={0}
@@ -211,7 +210,7 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
                   />
                 </div>
                 <div className="trace-row">
-                  <label>Seuil des angles</label>
+                  <label>{tr("image.corner")}</label>
                   <input
                     type="number"
                     min={0}
@@ -222,9 +221,9 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
                 </div>
 
                 <details>
-                  <summary>Options avancées</summary>
+                  <summary>{tr("image.advanced")}</summary>
                   <div className="trace-row">
-                    <label>Différence entre calques</label>
+                    <label>{tr("image.layerDifference")}</label>
                     <input
                       type="number"
                       min={0}
@@ -233,7 +232,7 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
                     />
                   </div>
                   <div className="trace-row">
-                    <label>Seuil de longueur</label>
+                    <label>{tr("image.length")}</label>
                     <input
                       type="number"
                       min={0}
@@ -243,7 +242,7 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
                     />
                   </div>
                   <div className="trace-row">
-                    <label>Itérations max</label>
+                    <label>{tr("image.iterations")}</label>
                     <input
                       type="number"
                       min={1}
@@ -252,7 +251,7 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
                     />
                   </div>
                   <div className="trace-row">
-                    <label>Seuil de jonction</label>
+                    <label>{tr("image.splice")}</label>
                     <input
                       type="number"
                       min={0}
@@ -261,7 +260,7 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
                     />
                   </div>
                   <div className="trace-row">
-                    <label>Précision du tracé (décimales)</label>
+                    <label>{tr("image.pathPrecision")}</label>
                     <input
                       type="number"
                       min={0}
@@ -280,11 +279,11 @@ export function ImageImportDialog({ onClose }: { onClose: () => void }) {
 
         <div className="dialog-actions">
           <button onClick={onClose} disabled={busy}>
-            Annuler
+            {tr("common.cancel")}
           </button>
           {path && (
             <button className="primary" onClick={() => void handleImport()} disabled={busy}>
-              {busy ? "Import…" : "Importer"}
+              {busy ? tr("image.importing") : tr("common.import")}
             </button>
           )}
         </div>

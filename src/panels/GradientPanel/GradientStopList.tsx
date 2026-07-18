@@ -1,8 +1,10 @@
 import type { Gradient } from "../../scene/types";
 import { GradientCommand } from "../../store/commands/GradientCommand";
 import { useHistoryStore } from "../../store/historyStore";
+import { useI18n } from "../../i18n/useI18n";
 
 export function GradientStopList({ gradient }: { gradient: Gradient }) {
+  const { t } = useI18n();
   const commit = (after: Gradient) => {
     useHistoryStore.getState().execute(new GradientCommand(gradient.id, gradient, after));
   };
@@ -49,7 +51,7 @@ export function GradientStopList({ gradient }: { gradient: Gradient }) {
           </button>
         </div>
       ))}
-      <button onClick={addStop}>+ Stop</button>
+      <button onClick={addStop}>{t("gradient.stop")}</button>
     </div>
   );
 }

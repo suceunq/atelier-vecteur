@@ -12,7 +12,7 @@ fn require_extension(path: &str, expected: &str) -> Result<(), String> {
     if path.to_ascii_lowercase().ends_with(expected) {
         Ok(())
     } else {
-        Err(format!("Le fichier de destination doit avoir l'extension {expected}"))
+        Err(format!("i18n:export.extension:{expected}"))
     }
 }
 
@@ -27,9 +27,7 @@ pub fn export_svg(svg: String, path: String) -> Result<(), String> {
 pub fn export_png(svg: String, path: String, width: u32, height: u32) -> Result<(), String> {
     require_extension(&path, ".png")?;
     if width == 0 || height == 0 || width > MAX_PNG_DIMENSION || height > MAX_PNG_DIMENSION {
-        return Err(format!(
-            "Dimensions PNG invalides (1-{MAX_PNG_DIMENSION} px attendu)"
-        ));
+        return Err("i18n:export.invalid_dimensions".to_string());
     }
 
     let cleaned = clean_svg(&svg);

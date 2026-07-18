@@ -7,8 +7,11 @@ import { useHistoryStore } from "../../store/historyStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
 import { GradientStopList } from "./GradientStopList";
+import { t } from "../../i18n";
+import { useI18n } from "../../i18n/useI18n";
 
 export function GradientPanel() {
+  const { t: tr } = useI18n();
   const selectedIds = useSelectionStore((s) => s.selectedIds);
   const scene = useSceneStore((s) => s.scene);
 
@@ -29,7 +32,7 @@ export function GradientPanel() {
     const previousFill = node.style.fill;
     useHistoryStore.getState().execute(
       new GenericCommand(
-        "Appliquer un dégradé",
+        t("command.applyGradient"),
         () => {
           useSceneStore.getState().addGradient(gradientObj);
           useSceneStore.getState().updateElementStyle(node.id, { fill: gradientRef(gradientObj.id) });
@@ -48,7 +51,7 @@ export function GradientPanel() {
     const fallbackColor = snapshot.stops[0]?.color ?? "#3b82f6";
     useHistoryStore.getState().execute(
       new GenericCommand(
-        "Retirer le dégradé",
+        t("command.removeGradient"),
         () => {
           useSceneStore.getState().updateElementStyle(node.id, { fill: fallbackColor });
           useSceneStore.getState().removeGradient(snapshot.id);
@@ -70,14 +73,14 @@ export function GradientPanel() {
 
   return (
     <div className="panel gradient-panel">
-      <h3>Dégradé</h3>
+      <h3>{tr("gradient.title")}</h3>
       {!gradient ? (
-        <button onClick={applyGradient}>Appliquer un dégradé au remplissage</button>
+        <button onClick={applyGradient}>{tr("gradient.apply")}</button>
       ) : (
         <>
           <div className="prop-row-controls">
-            <button onClick={toggleKind}>{gradient.kind === "linear" ? "Linéaire" : "Radial"}</button>
-            <button onClick={removeGradientFromFill}>Retirer</button>
+            <button onClick={toggleKind}>{gradient.kind === "linear" ? tr("gradient.linear") : tr("gradient.radial")}</button>
+            <button onClick={removeGradientFromFill}>{tr("common.remove")}</button>
           </div>
           <GradientStopList gradient={gradient} />
         </>

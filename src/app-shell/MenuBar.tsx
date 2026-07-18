@@ -15,6 +15,9 @@ import { useDocumentStore } from "../store/documentStore";
 import { UpdateDialog } from "./UpdateDialog";
 import { AboutDialog } from "./AboutDialog";
 import { FeedbackDialog } from "./FeedbackDialog";
+import { SettingsDialog } from "./SettingsDialog";
+import { localizedError } from "../i18n";
+import { useI18n } from "../i18n/useI18n";
 
 // Menus are native <details>/<summary> elements, which don't close themselves when an
 // item inside is clicked. Closing the nearest ancestor <details> on any click inside the
@@ -25,11 +28,13 @@ function closeMenu(e: React.MouseEvent<HTMLDivElement>) {
 }
 
 export function MenuBar() {
+  const { t } = useI18n();
   const [showPngDialog, setShowPngDialog] = useState(false);
   const [showImageImportDialog, setShowImageImportDialog] = useState(false);
   const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const theme = useSettingsStore((s) => s.theme);
   const snapEnabled = useViewportStore((s) => s.snapEnabled);
 
@@ -47,7 +52,7 @@ export function MenuBar() {
   }, []);
 
   const confirmDiscard = () =>
-    !useDocumentStore.getState().dirty || window.confirm("Les modifications non enregistrées seront perdues. Continuer ?");
+    !useDocumentStore.getState().dirty || window.confirm(t("dialog.unsaved"));
 
   const handleNew = () => {
     if (!confirmDiscard()) return;
@@ -62,7 +67,7 @@ export function MenuBar() {
     try {
       await openProject();
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Impossible d'ouvrir ce fichier de projet.");
+      window.alert(localizedError(err, "error.openProject"));
     }
   };
 
@@ -70,7 +75,7 @@ export function MenuBar() {
     try {
       await saveProject();
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Impossible d'enregistrer le projet.");
+      window.alert(localizedError(err, "error.saveProject"));
     }
   };
 
@@ -78,7 +83,7 @@ export function MenuBar() {
     try {
       await exportSvg();
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Impossible d'exporter le SVG.");
+      window.alert(localizedError(err, "error.exportSvg"));
     }
   };
 
@@ -86,15 +91,15 @@ export function MenuBar() {
     try {
       const update = await checkForUpdates();
       if (!update) {
-        window.alert("Vous utilisez déjà la dernière version.");
+        window.alert(t("update.upToDate"));
         return;
       }
       setPendingUpdate(update);
     } catch (err) {
       window.alert(
         err instanceof Error
-          ? `Vérification des mises à jour impossible : ${err.message}`
-          : "Vérification des mises à jour impossible (serveur de mise à jour non configuré ou injoignable)."
+          ? `${t("error.updateCheck")} ${err.message}`
+          : t("error.updateServer")
       );
     }
   };
@@ -104,83 +109,84 @@ export function MenuBar() {
       <span className="app-title">Atelier Vecteur</span>
 
       <details className="menu" name="app-menu">
-        <summary>Fichier</summary>
+        <summary>{t("menu.file")}</summary>
         <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={handleNew}>
-            Nouveau
+            {t("menu.new")}
           </button>
           <button className="menu-item" onClick={() => void handleOpen()}>
-            Ouvrir…
+            {t("menu.open")}
           </button>
           <button className="menu-item" onClick={() => void handleSave()}>
-            Enregistrer (Ctrl+S)
+            {t("menu.save")}
           </button>
           <button className="menu-item" onClick={() => void saveProjectAs()}>
-            Enregistrer sous…
+            {t("menu.saveAs")}
           </button>
           <hr />
           <button className="menu-item" onClick={() => setShowImageImportDialog(true)}>
-            Importer une image…
+            {t("menu.importImage")}
           </button>
           <hr />
           <button className="menu-item" onClick={() => void handleExportSvg()}>
-            Exporter en SVG…
+            {t("menu.exportSvg")}
           </button>
           <button className="menu-item" onClick={() => setShowPngDialog(true)}>
-            Exporter en PNG…
+            {t("menu.exportPng")}
           </button>
         </div>
       </details>
 
       <details className="menu" name="app-menu">
-        <summary>Édition</summary>
+        <summary>{t("menu.edit")}</summary>
         <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={() => useHistoryStore.getState().undo()}>
-            Annuler (Ctrl+Z)
+            {t("menu.undo")}
           </button>
           <button className="menu-item" onClick={() => useHistoryStore.getState().redo()}>
-            Rétablir (Ctrl+Y)
+            {t("menu.redo")}
           </button>
         </div>
       </details>
 
       <details className="menu" name="app-menu">
-        <summary>Affichage</summary>
+        <summary>{t("menu.view")}</summary>
         <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={() => useViewportStore.getState().toggleGrid()}>
-            Basculer la grille
+            {t("menu.grid")}
           </button>
           <button
             className={`menu-item${snapEnabled ? " menu-item-checked" : ""}`}
             onClick={() => useViewportStore.getState().toggleSnap()}
           >
-            Magnétisme sur la grille
+            {t("menu.snap")}
           </button>
           <button className="menu-item" onClick={() => useViewportStore.getState().setZoom(1)}>
-            Réinitialiser le zoom (100%)
+            {t("menu.resetZoom")}
           </button>
           <hr />
           <button
             className={`menu-item${theme === "dark" ? " menu-item-checked" : ""}`}
             onClick={() => useSettingsStore.getState().toggleTheme()}
           >
-            Mode sombre
+            {t("menu.darkMode")}
           </button>
+          <button className="menu-item" onClick={() => setShowSettingsDialog(true)}>{t("menu.settings")}</button>
         </div>
       </details>
 
       <details className="menu" name="app-menu">
-        <summary>Aide</summary>
+        <summary>{t("menu.help")}</summary>
         <div className="menu-dropdown" onClick={closeMenu}>
           <button className="menu-item" onClick={() => void handleCheckForUpdates()}>
-            Vérifier les mises à jour…
+            {t("menu.checkUpdates")}
           </button>
           <button className="menu-item" onClick={() => setShowFeedbackDialog(true)}>
-            ✉ Suggestion / Correction
+            ✉ {t("menu.feedback")}
           </button>
           <hr />
           <button className="menu-item" onClick={() => setShowAboutDialog(true)}>
-            À propos d’Atelier Vecteur
+            {t("menu.about")}
           </button>
         </div>
       </details>
@@ -190,6 +196,7 @@ export function MenuBar() {
       {pendingUpdate && <UpdateDialog update={pendingUpdate} onClose={() => setPendingUpdate(null)} />}
       {showAboutDialog && <AboutDialog onClose={() => setShowAboutDialog(false)} />}
       {showFeedbackDialog && <FeedbackDialog onClose={() => setShowFeedbackDialog(false)} />}
+      {showSettingsDialog && <SettingsDialog onClose={() => setShowSettingsDialog(false)} />}
     </div>
   );
 }

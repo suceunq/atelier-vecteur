@@ -5,15 +5,15 @@ import { PatternCommand } from "../../store/commands/PatternCommand";
 import { useHistoryStore } from "../../store/historyStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
+import { t, type MessageKey } from "../../i18n";
+import { useI18n } from "../../i18n/useI18n";
 
-const KIND_LABELS: Record<PatternKind, string> = {
-  dots: "Points",
-  stripes: "Rayures",
-  grid: "Grille",
-  checkerboard: "Damier",
+const KIND_LABELS: Record<PatternKind, MessageKey> = {
+  dots: "pattern.dots", stripes: "pattern.stripes", grid: "pattern.grid", checkerboard: "pattern.checkerboard",
 };
 
 export function PatternPanel() {
+  const { t: tr } = useI18n();
   const selectedIds = useSelectionStore((s) => s.selectedIds);
   const scene = useSceneStore((s) => s.scene);
 
@@ -28,7 +28,7 @@ export function PatternPanel() {
     const previousFill = node.style.fill;
     useHistoryStore.getState().execute(
       new GenericCommand(
-        "Appliquer un motif",
+        t("command.applyPattern"),
         () => {
           useSceneStore.getState().addPattern(patternObj);
           useSceneStore.getState().updateElementStyle(node.id, { fill: patternRef(patternObj.id) });
@@ -46,7 +46,7 @@ export function PatternPanel() {
     const snapshot = pattern;
     useHistoryStore.getState().execute(
       new GenericCommand(
-        "Retirer le motif",
+        t("command.removePattern"),
         () => {
           useSceneStore.getState().updateElementStyle(node.id, { fill: snapshot.color });
           useSceneStore.getState().removePattern(snapshot.id);
@@ -66,23 +66,23 @@ export function PatternPanel() {
 
   return (
     <div className="panel pattern-panel">
-      <h3>Motif</h3>
+      <h3>{tr("pattern.title")}</h3>
       {!pattern ? (
         <div className="prop-row-controls">
           {(Object.keys(KIND_LABELS) as PatternKind[]).map((kind) => (
             <button key={kind} onClick={() => applyPattern(kind)}>
-              {KIND_LABELS[kind]}
+              {tr(KIND_LABELS[kind])}
             </button>
           ))}
         </div>
       ) : (
         <>
           <div className="prop-row-controls">
-            <span>{KIND_LABELS[pattern.kind]}</span>
-            <button onClick={removePattern}>Retirer</button>
+            <span>{tr(KIND_LABELS[pattern.kind])}</span>
+            <button onClick={removePattern}>{tr("common.remove")}</button>
           </div>
           <div className="prop-row">
-            <label>Taille</label>
+            <label>{tr("pattern.size")}</label>
             <input
               type="number"
               min={2}
@@ -91,7 +91,7 @@ export function PatternPanel() {
             />
           </div>
           <div className="prop-row">
-            <label>Couleur / Fond</label>
+            <label>{tr("pattern.colors")}</label>
             <div className="prop-row-controls">
               <input
                 type="color"

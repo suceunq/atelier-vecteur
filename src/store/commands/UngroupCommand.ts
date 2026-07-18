@@ -1,10 +1,11 @@
 import type { ElementId, GroupNode, LayerId } from "../../scene/types";
 import { useSceneStore } from "../sceneStore";
 import type { Command } from "./Command";
+import { t } from "../../i18n";
 
 /** Ungroups a GroupNode back into its children at the group's former position — undo restores the group. */
 export class UngroupCommand implements Command {
-  label = "Dégrouper";
+  label = t("command.ungroup");
   private childIds: ElementId[];
   private groupIndex: number;
 
