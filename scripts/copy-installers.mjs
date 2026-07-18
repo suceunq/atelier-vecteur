@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "Corrige le bouton « Faire un don avec PayPal » de la fenêtre de bienvenue, qui ne réagissait plus au clic (permission opener:allow-default-urls manquante).",
+    notes: "Améliore le message affiché si l'installation automatique échoue après le renouvellement de la clé de signature (v0.3.3) : explication claire et lien de téléchargement manuel, dans les 4 langues.",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {
