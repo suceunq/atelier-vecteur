@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "Nouvelle fenêtre de bienvenue multilingue, avec contrôle d’affichage au démarrage, présentation du logiciel et soutien du projet via un lien PayPal configurable sans recompilation.",
+    notes: "Le lien PayPal officiel est désormais géré uniquement par la configuration du projet et n’est plus visible ni modifiable dans les paramètres.",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {

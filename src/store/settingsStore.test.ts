@@ -2,11 +2,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { useSettingsStore } from "./settingsStore";
 
 const REMOTE = "https://paypal.me/shared-project";
-const LOCAL = "https://www.paypal.com/donate/?hosted_button_id=LOCAL";
 
 describe("welcome and donation settings", () => {
   beforeEach(() => {
-    useSettingsStore.getState().setDonationUrl("");
     useSettingsStore.getState().setRemoteDonationUrl("");
     useSettingsStore.getState().setShowWelcomeOnStartup(true);
   });
@@ -16,12 +14,10 @@ describe("welcome and donation settings", () => {
     expect(useSettingsStore.getState().donationUrl).toBe(REMOTE);
   });
 
-  it("prefers a local override and returns to the shared link when cleared", () => {
+  it("replaces the donation link only through shared configuration", () => {
     useSettingsStore.getState().setRemoteDonationUrl(REMOTE);
-    useSettingsStore.getState().setDonationUrl(LOCAL);
-    expect(useSettingsStore.getState().donationUrl).toBe(LOCAL);
-    useSettingsStore.getState().setDonationUrl("");
-    expect(useSettingsStore.getState().donationUrl).toBe(REMOTE);
+    useSettingsStore.getState().setRemoteDonationUrl("https://paypal.me/new-shared-project");
+    expect(useSettingsStore.getState().donationUrl).toBe("https://paypal.me/new-shared-project");
   });
 
   it("stores the welcome visibility preference in application state", () => {

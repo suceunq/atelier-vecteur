@@ -202,7 +202,7 @@ export function MenuBar() {
       {showAboutDialog && <AboutDialog onClose={() => setShowAboutDialog(false)} />}
       {showFeedbackDialog && <FeedbackDialog onClose={() => setShowFeedbackDialog(false)} />}
       {showSettingsDialog && <SettingsDialog onClose={() => setShowSettingsDialog(false)} />}
-      {showWelcomeDialog && <WelcomeDialog onClose={() => setShowWelcomeDialog(false)} onConfigureDonation={() => { setShowWelcomeDialog(false); setShowSettingsDialog(true); }} />}
+      {showWelcomeDialog && <WelcomeDialog onClose={() => setShowWelcomeDialog(false)} />}
     </div>
   );
 }

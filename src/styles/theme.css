@@ -221,26 +221,6 @@ body,
   justify-content: flex-start;
 }
 
-.settings-dialog .settings-url {
-  display: grid;
-  align-items: stretch;
-}
-
-.settings-url input {
-  width: 100%;
-  padding: 7px;
-}
-
-.settings-active-url {
-  margin: 0;
-  padding: 7px 9px;
-  border-radius: 6px;
-  color: var(--color-text-secondary);
-  background: var(--color-panel-bg);
-  font-size: 11px;
-  overflow-wrap: anywhere;
-}
-
 button, label, summary, .status-bar { overflow-wrap: anywhere; }
 
 .panel {
@@ -628,17 +608,6 @@ button, label, summary, .status-bar { overflow-wrap: anywhere; }
   border-radius: 8px;
   background: var(--color-panel-bg);
   font-size: 12px;
-}
-
-.welcome-config-notice button {
-  padding: 0;
-  border: 0;
-  color: #2563eb;
-  background: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
 }
 
 .welcome-startup {
