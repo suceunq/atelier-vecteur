@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Update } from "@tauri-apps/plugin-updater";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { exportSvg } from "../io/svgExport";
 import { openProject, saveProject, saveProjectAs } from "../io/projectFile";
-import { checkForUpdates } from "../io/updater";
+import { checkForUpdates, downloadUpdate, installDownloadedUpdateAndRelaunch } from "../io/updater";
 import { ExportPngDialog } from "../panels/ExportPanel/ExportPngDialog";
 import { ImageImportDialog } from "../panels/ImagePanel/ImageImportDialog";
 import { createEmptyScene } from "../scene/factory";
@@ -12,7 +13,6 @@ import { useSelectionStore } from "../store/selectionStore";
 import { useSettingsStore } from "../store/settingsStore";
 import { useViewportStore } from "../store/viewportStore";
 import { useDocumentStore } from "../store/documentStore";
-import { UpdateDialog } from "./UpdateDialog";
 import { AboutDialog } from "./AboutDialog";
 import { FeedbackDialog } from "./FeedbackDialog";
 import { SettingsDialog } from "./SettingsDialog";
@@ -28,29 +28,91 @@ function closeMenu(e: React.MouseEvent<HTMLDivElement>) {
   e.currentTarget.closest("details")?.removeAttribute("open");
 }
 
+const CHECK_INTERVAL_MS = 60 * 60 * 1_000;
+const RETRY_DELAY_MS = 15 * 60 * 1_000;
+const RELEASES_URL = "https://github.com/suceunq/atelier-vecteur/releases/latest";
+
 export function MenuBar() {
   const { t } = useI18n();
   const [showPngDialog, setShowPngDialog] = useState(false);
   const [showImageImportDialog, setShowImageImportDialog] = useState(false);
-  const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
   const [showAboutDialog, setShowAboutDialog] = useState(false);
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(() => useSettingsStore.getState().showWelcomeOnStartup);
+  const [updateToastVisible, setUpdateToastVisible] = useState(false);
   const theme = useSettingsStore((s) => s.theme);
   const snapEnabled = useViewportStore((s) => s.snapEnabled);
+  const handlingUpdate = useRef(false);
+  const signatureWarningShown = useRef(false);
 
-  // Silent check on launch: an update found here opens the same dialog as the manual menu
-  // action, but a failure (endpoint unreachable, offline, etc.) stays silent — the user didn't
-  // ask for anything, so there's nothing to report back beyond "no update dialog appeared".
+  // Installs older than v0.3.3 can't verify a release signed with the renewed key (see the
+  // v0.3.4/v0.3.5 signature-rotation fix) and will keep failing on every future retry - that
+  // one case is worth a one-time, explicit notice, unlike ordinary transient failures (offline,
+  // endpoint unreachable) which are retried silently by the next scheduled check.
+  const reportUpdateError = (err: unknown) => {
+    handlingUpdate.current = false;
+    const message = err instanceof Error ? err.message : String(err);
+    if (/signature/i.test(message) && !signatureWarningShown.current) {
+      signatureWarningShown.current = true;
+      if (window.confirm(t("error.updateSignature"))) void openUrl(RELEASES_URL);
+    }
+  };
+
+  // Downloads eagerly (harmless - nothing is installed yet) but only installs and relaunches
+  // once there's nothing unsaved to lose. If the document is already clean this resolves
+  // immediately; otherwise it waits for the next save before restarting the app.
+  const installOnceSafe = (update: Update) => {
+    const install = () => void installDownloadedUpdateAndRelaunch(update).catch(reportUpdateError);
+    if (!useDocumentStore.getState().dirty) {
+      install();
+      return;
+    }
+    const unsubscribe = useDocumentStore.subscribe((state) => {
+      if (state.dirty) return;
+      unsubscribe();
+      install();
+    });
+  };
+
+  const downloadAndInstall = async (update: Update) => {
+    if (handlingUpdate.current) return;
+    handlingUpdate.current = true;
+    setUpdateToastVisible(true);
+    setTimeout(() => setUpdateToastVisible(false), 3000);
+    try {
+      await downloadUpdate(update, () => {});
+      installOnceSafe(update);
+    } catch (err) {
+      reportUpdateError(err);
+    }
+  };
+
+  // Fully automatic like the rest of the software: silent checks in the background (at launch,
+  // then hourly, with a shorter retry after a failure), download as soon as found, install and
+  // relaunch as soon as it's safe to. No confirmation is ever requested.
   useEffect(() => {
-    checkForUpdates()
-      .then((update) => {
-        if (update) setPendingUpdate(update);
-      })
-      .catch(() => {
-        // ignored — see comment above
-      });
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const scheduleNext = (delayMs: number) => {
+      if (cancelled) return;
+      timer = setTimeout(() => void runCheck(), delayMs);
+    };
+    const runCheck = async () => {
+      try {
+        const update = await checkForUpdates();
+        if (cancelled) return;
+        if (update) void downloadAndInstall(update);
+        scheduleNext(CHECK_INTERVAL_MS);
+      } catch {
+        scheduleNext(RETRY_DELAY_MS);
+      }
+    };
+    void runCheck();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   const confirmDiscard = () =>
@@ -96,7 +158,8 @@ export function MenuBar() {
         window.alert(t("update.upToDate"));
         return;
       }
-      setPendingUpdate(update);
+      window.alert(t("update.foundAutoInstalling", { version: update.version }));
+      void downloadAndInstall(update);
     } catch (err) {
       window.alert(
         err instanceof Error
@@ -198,7 +261,7 @@ export function MenuBar() {
 
       {showPngDialog && <ExportPngDialog onClose={() => setShowPngDialog(false)} />}
       {showImageImportDialog && <ImageImportDialog onClose={() => setShowImageImportDialog(false)} />}
-      {pendingUpdate && !showWelcomeDialog && <UpdateDialog update={pendingUpdate} onClose={() => setPendingUpdate(null)} />}
+      {updateToastVisible && <div className="update-toast" role="status">{t("update.downloadingToast")}</div>}
       {showAboutDialog && <AboutDialog onClose={() => setShowAboutDialog(false)} />}
       {showFeedbackDialog && <FeedbackDialog onClose={() => setShowFeedbackDialog(false)} />}
       {showSettingsDialog && <SettingsDialog onClose={() => setShowSettingsDialog(false)} />}

@@ -11,14 +11,14 @@ export async function checkForUpdates(): Promise<Update | null> {
   return check();
 }
 
-/** Downloads, installs, and relaunches the app onto the given update — call only after the user has confirmed. */
 export interface UpdateProgress { percent: number; bytesPerSecond: number; secondsRemaining: number | null }
 
-export async function installUpdateAndRelaunch(update: Update, onProgress: (progress: UpdateProgress) => void): Promise<void> {
+/** Downloads the update in the background - safe to call at any time, nothing is installed yet. */
+export async function downloadUpdate(update: Update, onProgress: (progress: UpdateProgress) => void): Promise<void> {
   let downloaded = 0;
   let total = 0;
   let startedAt = Date.now();
-  await update.downloadAndInstall((event) => {
+  await update.download((event) => {
     if (event.event === "Started") {
       total = event.data.contentLength ?? 0;
       downloaded = 0;
@@ -32,5 +32,10 @@ export async function installUpdateAndRelaunch(update: Update, onProgress: (prog
       onProgress({ percent, bytesPerSecond, secondsRemaining });
     }
   });
+}
+
+/** Installs an already-downloaded update and relaunches - call only once nothing unsaved would be lost. */
+export async function installDownloadedUpdateAndRelaunch(update: Update): Promise<void> {
+  await update.install();
   await relaunch();
 }

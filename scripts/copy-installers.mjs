@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "Corrige le bouton « Faire un don avec PayPal » qui affichait une erreur PayPal : l'identifiant marchand configuré comportait une faute de frappe (chiffre manquant) depuis la v0.3.3 et pointait vers une page inexistante.",
+    notes: "Les mises à jour sont désormais entièrement automatiques, comme les autres logiciels : recherche en arrière-plan, téléchargement et installation sans confirmation à donner. L'installation attend qu'il n'y ait plus de modification non enregistrée avant de redémarrer, pour ne jamais perdre de travail en cours. Une petite fenêtre apparaît brièvement (~3 secondes) au début du téléchargement pour l'indiquer.",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {

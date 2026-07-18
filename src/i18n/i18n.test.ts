@@ -14,7 +14,7 @@ describe("translations", () => {
   });
 
   it("interpolates parameters", () => {
-    expect(t("update.version", { version: "2", current: "1" }, "en")).toBe("Version 2 (installed: 1)");
+    expect(t("about.version", { version: "2" }, "en")).toBe("Version 2");
   });
 
   it("localizes stable backend error codes", () => {
