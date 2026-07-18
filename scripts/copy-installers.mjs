@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "Améliore le message affiché si l'installation automatique échoue après le renouvellement de la clé de signature (v0.3.3) : explication claire et lien de téléchargement manuel, dans les 4 langues.",
+    notes: "Corrige le bouton « Faire un don avec PayPal » qui affichait une erreur PayPal : l'identifiant marchand configuré comportait une faute de frappe (chiffre manquant) depuis la v0.3.3 et pointait vers une page inexistante.",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {

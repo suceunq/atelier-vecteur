@@ -14,7 +14,7 @@ describe("runtime donation configuration", () => {
   });
 
   it("accepts the project's merchant-ID donation page", () => {
-    expect(donationUrlFromConfig({ donationUrl: "https://www.paypal.com/donate/?business=X6TNHGN5K7QA&no_recurring=0&item_name=Atelier%20Vecteur&currency_code=EUR" }))
-      .toBe("https://www.paypal.com/donate/?business=X6TNHGN5K7QA&no_recurring=0&item_name=Atelier%20Vecteur&currency_code=EUR");
+    expect(donationUrlFromConfig({ donationUrl: "https://www.paypal.com/donate/?business=X65TNHGN5K7QA&no_recurring=0&item_name=Atelier%20Vecteur&currency_code=EUR" }))
+      .toBe("https://www.paypal.com/donate/?business=X65TNHGN5K7QA&no_recurring=0&item_name=Atelier%20Vecteur&currency_code=EUR");
   });
 });
