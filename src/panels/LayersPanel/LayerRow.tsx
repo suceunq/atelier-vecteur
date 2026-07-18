@@ -4,6 +4,8 @@ import { GenericCommand } from "../../store/commands/GenericCommand";
 import { useHistoryStore } from "../../store/historyStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
+import { t } from "../../i18n";
+import { useI18n } from "../../i18n/useI18n";
 
 interface Props {
   layer: Layer;
@@ -14,6 +16,7 @@ interface Props {
 }
 
 export function LayerRow({ layer, isTop, isBottom }: Props) {
+  const { t: tr } = useI18n();
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(layer.name);
   const selectedIds = useSelectionStore((s) => s.selectedIds);
@@ -28,7 +31,7 @@ export function LayerRow({ layer, isTop, isBottom }: Props) {
       .getState()
       .execute(
         new GenericCommand(
-          "Renommer le calque",
+          t("layer.rename"),
           () => useSceneStore.getState().renameLayer(layer.id, trimmed),
           () => useSceneStore.getState().renameLayer(layer.id, before)
         )
@@ -42,7 +45,7 @@ export function LayerRow({ layer, isTop, isBottom }: Props) {
       .getState()
       .execute(
         new GenericCommand(
-          "Réordonner les calques",
+          t("layer.reorder"),
           () => useSceneStore.getState().reorderLayer(layer.id, toIndex),
           () => useSceneStore.getState().reorderLayer(layer.id, fromIndex)
         )
@@ -56,7 +59,7 @@ export function LayerRow({ layer, isTop, isBottom }: Props) {
     const elementSnapshots = layer.elementIds.map((id) => JSON.parse(JSON.stringify(scene.elements[id])));
     useHistoryStore.getState().execute(
       new GenericCommand(
-        "Supprimer le calque",
+        t("layer.delete"),
         () => useSceneStore.getState().removeLayer(layer.id),
         () => {
           const store = useSceneStore.getState();
@@ -81,14 +84,14 @@ export function LayerRow({ layer, isTop, isBottom }: Props) {
     <div className={`layer-row ${isActive ? "layer-row-active" : ""}`}>
       <button
         className="icon-button"
-        title={layer.visible ? "Masquer" : "Afficher"}
+        title={layer.visible ? tr("layer.hide") : tr("layer.show")}
         onClick={() => useSceneStore.getState().toggleLayerVisibility(layer.id)}
       >
         {layer.visible ? "👁" : "🚫"}
       </button>
       <button
         className="icon-button"
-        title={layer.locked ? "Déverrouiller" : "Verrouiller"}
+        title={layer.locked ? tr("layer.unlock") : tr("layer.lock")}
         onClick={() => useSceneStore.getState().toggleLayerLock(layer.id)}
       >
         {layer.locked ? "🔒" : "🔓"}
@@ -115,13 +118,13 @@ export function LayerRow({ layer, isTop, isBottom }: Props) {
         </span>
       )}
 
-      <button className="icon-button" disabled={isTop} title="Monter" onClick={() => moveLayer(indexAfterUp())}>
+      <button className="icon-button" disabled={isTop} title={tr("layer.up")} onClick={() => moveLayer(indexAfterUp())}>
         ▲
       </button>
-      <button className="icon-button" disabled={isBottom} title="Descendre" onClick={() => moveLayer(indexAfterDown())}>
+      <button className="icon-button" disabled={isBottom} title={tr("layer.down")} onClick={() => moveLayer(indexAfterDown())}>
         ▼
       </button>
-      <button className="icon-button" title="Supprimer le calque" onClick={deleteLayer}>
+      <button className="icon-button" title={tr("layer.delete")} onClick={deleteLayer}>
         🗑
       </button>
     </div>

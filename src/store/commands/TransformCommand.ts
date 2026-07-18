@@ -1,10 +1,11 @@
 import type { ElementId, Transform } from "../../scene/types";
 import { useSceneStore } from "../sceneStore";
 import type { Command } from "./Command";
+import { t } from "../../i18n";
 
 /** Captures the before/after transform for one or more elements moved/resized/rotated together. */
 export class TransformCommand implements Command {
-  label = "Transformer";
+  label = t("command.transform");
 
   constructor(
     private before: Record<ElementId, Transform>,

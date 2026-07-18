@@ -3,8 +3,10 @@ import type { Transform } from "../../scene/types";
 import { useHistoryStore } from "../../store/historyStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { TransformCommand } from "../../store/commands/TransformCommand";
+import { useI18n } from "../../i18n/useI18n";
 
 export function TransformControl({ id, transform }: { id: string; transform: Transform }) {
+  const { t } = useI18n();
   const [locked, setLocked] = useState(Math.abs(transform.scaleX - transform.scaleY) < 0.0001);
 
   const commit = (patch: Partial<Transform>) => {
@@ -37,17 +39,17 @@ export function TransformControl({ id, transform }: { id: string; transform: Tra
 
   return (
     <section className="transform-control">
-      <h4>Position et transformation</h4>
+      <h4>{t("panel.transform")}</h4>
       <div className="transform-grid">
         {numberField("X", transform.x, "x", "px")}
         {numberField("Y", transform.y, "y", "px")}
-        {numberField("Rotation", transform.rotation, "rotation", "°")}
-        {numberField("Échelle X", transform.scaleX, "scaleX")}
-        {numberField("Échelle Y", transform.scaleY, "scaleY")}
+        {numberField(t("panel.rotation"), transform.rotation, "rotation", "°")}
+        {numberField(t("panel.scaleX"), transform.scaleX, "scaleX")}
+        {numberField(t("panel.scaleY"), transform.scaleY, "scaleY")}
       </div>
       <label className="inline-toggle">
         <input type="checkbox" checked={locked} onChange={(event) => setLocked(event.target.checked)} />
-        Conserver les proportions
+        {t("panel.keepRatio")}
       </label>
     </section>
   );

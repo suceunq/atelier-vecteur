@@ -100,7 +100,7 @@ body,
   border: 1px solid var(--color-border-strong);
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 200px;
+  min-width: 230px;
   z-index: 20;
   padding: 4px;
 }
@@ -116,6 +116,7 @@ body,
   border-radius: 4px;
   font-size: 13px;
   color: var(--color-text);
+  white-space: normal;
 }
 
 .menu-item:hover {
@@ -179,13 +180,30 @@ body,
 }
 
 .side-panels {
-  width: 260px;
+  width: clamp(260px, 22vw, 320px);
   display: flex;
   flex-direction: column;
   border-left: 1px solid var(--color-border);
   background: var(--color-panel-bg);
   overflow-y: auto;
 }
+
+.settings-dialog {
+  width: min(480px, calc(100vw - 32px));
+}
+
+.settings-dialog > label {
+  display: grid;
+  gap: 6px;
+  color: var(--color-text-secondary);
+}
+
+.settings-dialog select {
+  width: 100%;
+  padding: 7px;
+}
+
+button, label, summary, .status-bar { overflow-wrap: anywhere; }
 
 .panel {
   border-bottom: 1px solid var(--color-border);

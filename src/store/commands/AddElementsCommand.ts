@@ -1,6 +1,7 @@
 import type { ElementId, LayerId, SceneNode } from "../../scene/types";
 import { useSceneStore } from "../sceneStore";
 import type { Command } from "./Command";
+import { t } from "../../i18n";
 
 /** Adds multiple elements as a single undo step — used for paste/duplicate/image tracing. */
 export class AddElementsCommand implements Command {
@@ -15,7 +16,7 @@ export class AddElementsCommand implements Command {
   constructor(
     private nodes: SceneNode[],
     private layerId?: LayerId,
-    label = "Coller",
+    label = t("command.addElements"),
     private childOnlyIds: Set<ElementId> = new Set()
   ) {
     this.label = label;

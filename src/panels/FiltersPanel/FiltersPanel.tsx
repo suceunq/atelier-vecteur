@@ -5,8 +5,11 @@ import { GenericCommand } from "../../store/commands/GenericCommand";
 import { useHistoryStore } from "../../store/historyStore";
 import { useSceneStore } from "../../store/sceneStore";
 import { useSelectionStore } from "../../store/selectionStore";
+import { t } from "../../i18n";
+import { useI18n } from "../../i18n/useI18n";
 
 export function FiltersPanel() {
+  const { t: tr } = useI18n();
   const selectedIds = useSelectionStore((s) => s.selectedIds);
   const scene = useSceneStore((s) => s.scene);
 
@@ -21,7 +24,7 @@ export function FiltersPanel() {
     const previousFilter = node.style.filter;
     useHistoryStore.getState().execute(
       new GenericCommand(
-        kind === "blur" ? "Appliquer un flou" : "Appliquer une ombre portée",
+        kind === "blur" ? t("command.applyBlur") : t("command.applyShadow"),
         () => {
           useSceneStore.getState().addFilter(filterObj);
           useSceneStore.getState().updateElementStyle(node.id, { filter: filterRef(filterObj.id) });
@@ -39,7 +42,7 @@ export function FiltersPanel() {
     const snapshot = filter;
     useHistoryStore.getState().execute(
       new GenericCommand(
-        "Retirer le filtre",
+        t("command.removeFilter"),
         () => {
           useSceneStore.getState().updateElementStyle(node.id, { filter: null });
           useSceneStore.getState().removeFilter(snapshot.id);
@@ -61,20 +64,20 @@ export function FiltersPanel() {
 
   return (
     <div className="panel filters-panel">
-      <h3>Filtre</h3>
+      <h3>{tr("filter.title")}</h3>
       {!filter ? (
         <div className="prop-row-controls">
-          <button onClick={() => applyFilter("blur")}>+ Flou</button>
-          <button onClick={() => applyFilter("shadow")}>+ Ombre portée</button>
+          <button onClick={() => applyFilter("blur")}>+ {tr("filter.blur")}</button>
+          <button onClick={() => applyFilter("shadow")}>+ {tr("filter.shadow")}</button>
         </div>
       ) : (
         <>
           <div className="prop-row-controls">
-            <span>{filter.kind === "blur" ? "Flou" : "Ombre portée"}</span>
-            <button onClick={removeFilter}>Retirer</button>
+            <span>{filter.kind === "blur" ? tr("filter.blur") : tr("filter.shadow")}</span>
+            <button onClick={removeFilter}>{tr("common.remove")}</button>
           </div>
           <div className="prop-row">
-            <label>Rayon</label>
+            <label>{tr("filter.radius")}</label>
             <input
               type="number"
               min={0}
@@ -85,7 +88,7 @@ export function FiltersPanel() {
           {filter.kind === "shadow" && (
             <>
               <div className="prop-row">
-                <label>Décalage X / Y</label>
+                <label>{tr("filter.offset")}</label>
                 <div className="prop-row-controls">
                   <input
                     type="number"
@@ -100,7 +103,7 @@ export function FiltersPanel() {
                 </div>
               </div>
               <div className="prop-row">
-                <label>Couleur / Opacité</label>
+                <label>{tr("filter.colorOpacity")}</label>
                 <div className="prop-row-controls">
                   <input
                     type="color"

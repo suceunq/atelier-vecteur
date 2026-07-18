@@ -1,4 +1,5 @@
 import type { Style } from "../../scene/types";
+import { useI18n } from "../../i18n/useI18n";
 
 interface Props {
   style: Style;
@@ -6,15 +7,16 @@ interface Props {
 }
 
 export function FillControl({ style, onChange }: Props) {
+  const { t } = useI18n();
   const isNone = style.fill === "none";
   return (
     <div className="prop-row">
-      <label>Remplissage</label>
+      <label>{t("panel.fill")}</label>
       <div className="prop-row-controls">
         <input
           type="checkbox"
           checked={!isNone}
-          title="Activer le remplissage"
+          title={t("panel.enableFill")}
           onChange={(e) => onChange({ fill: e.target.checked ? "#3b82f6" : "none" })}
         />
         <input

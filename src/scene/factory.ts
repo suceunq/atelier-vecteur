@@ -25,6 +25,7 @@ import {
   type TextNode,
 } from "./types";
 import { worldBBox, unionBBox } from "./geometry";
+import { t } from "../i18n";
 
 export function createId(): string {
   return nanoid(10);
@@ -110,7 +111,7 @@ export function createMultiPath(originX: number, originY: number, subpaths: Path
   };
 }
 
-export function createText(x: number, y: number, content = "Texte"): TextNode {
+export function createText(x: number, y: number, content = t("document.defaultText")): TextNode {
   return {
     id: createId(),
     type: "text",
@@ -219,9 +220,9 @@ export function createArtboard(name: string, x: number, y: number, width = 800, 
 }
 
 export function createEmptyScene(): Scene {
-  const layer = createLayer("Calque 1");
+  const layer = createLayer(t("layer.defaultName", { number: 1 }));
   return {
-    artboards: [createArtboard("Artboard 1", 0, 0)],
+    artboards: [createArtboard(t("artboard.defaultName", { number: 1 }), 0, 0)],
     layers: [layer],
     elements: {},
     gradients: {},

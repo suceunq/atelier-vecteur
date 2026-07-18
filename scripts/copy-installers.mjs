@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "L’installateur et le désinstalleur utilisent désormais l’icône officielle d’Atelier Vecteur.",
+    notes: "Atelier Vecteur est désormais entièrement disponible en français, anglais, espagnol et allemand, avec détection automatique de la langue du système et sélection manuelle dans les paramètres.",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {

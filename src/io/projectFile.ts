@@ -3,12 +3,13 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { isPlausibleScene } from "../scene/validate";
 import { useSceneStore } from "../store/sceneStore";
 import { useDocumentStore } from "../store/documentStore";
+import { t } from "../i18n";
 
-const FILE_FILTERS = [{ name: "Projet SVG Atelier", extensions: ["svgatelier"] }];
 const CURRENT_FORMAT_VERSION = 1;
+const fileFilters = () => [{ name: t("file.project"), extensions: ["svgatelier"] }];
 
 export async function saveProjectAs(): Promise<string | null> {
-  const path = await save({ filters: FILE_FILTERS, defaultPath: "sans-titre.svgatelier" });
+  const path = await save({ filters: fileFilters(), defaultPath: `${t("file.untitled")}.svgatelier` });
   if (!path) return null;
   const scene = useSceneStore.getState().scene;
   await invoke("save_project", { path, scene });
@@ -27,20 +28,20 @@ export async function saveProject(): Promise<string | null> {
 }
 
 export async function openProject(): Promise<string | null> {
-  const path = await open({ filters: FILE_FILTERS, multiple: false });
+  const path = await open({ filters: fileFilters(), multiple: false });
   if (!path || Array.isArray(path)) return null;
   const result = await invoke<{ manifest: { format_version: number; app_version: string }; scene: unknown }>(
     "load_project",
     { path }
   );
   if (!Number.isInteger(result.manifest?.format_version) || result.manifest.format_version < 1) {
-    throw new Error("Version de fichier de projet invalide.");
+    throw new Error(t("error.fileVersion"));
   }
   if (result.manifest.format_version > CURRENT_FORMAT_VERSION) {
-    throw new Error("Ce projet a été créé avec une version plus récente d’Atelier Vecteur. Mettez l’application à jour pour l’ouvrir.");
+    throw new Error(t("error.fileFuture"));
   }
   if (!isPlausibleScene(result.scene)) {
-    throw new Error("Fichier de projet invalide ou corrompu.");
+    throw new Error(t("error.fileInvalid"));
   }
   useSceneStore.getState().replaceScene(result.scene);
   useDocumentStore.getState().markSaved(path);

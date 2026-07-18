@@ -5,6 +5,7 @@ import { useSceneStore } from "../store/sceneStore";
 import { useTextEditStore } from "../store/textEditStore";
 import { useViewportStore } from "../store/viewportStore";
 import { userToScreen } from "./viewportMath";
+import { t } from "../i18n";
 
 /** HTML textarea overlaid on the canvas for inline text editing — the real rendering stays the SVG <text> underneath. */
 export function TextEditOverlay() {
@@ -42,7 +43,7 @@ export function TextEditOverlay() {
       .getState()
       .execute(
         new GenericCommand(
-          "Modifier le texte",
+          t("command.changeText"),
           () => useSceneStore.getState().updateElementGeometry(node.id, { content: after }),
           () => useSceneStore.getState().updateElementGeometry(node.id, { content: before })
         )

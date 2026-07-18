@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { exportPng } from "../../io/pngExport";
 import { useSceneStore } from "../../store/sceneStore";
+import { localizedError } from "../../i18n";
+import { useI18n } from "../../i18n/useI18n";
 
 export function ExportPngDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   const artboard = useSceneStore((s) => s.scene.artboards[0]);
   const [width, setWidth] = useState(artboard?.width ?? 800);
   const [height, setHeight] = useState(artboard?.height ?? 600);
@@ -12,26 +15,26 @@ export function ExportPngDialog({ onClose }: { onClose: () => void }) {
       await exportPng(width, height);
       onClose();
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Impossible d'exporter le PNG.");
+      window.alert(localizedError(err, "error.exportPng"));
     }
   };
 
   return (
     <div className="dialog-overlay" onClick={onClose}>
       <div className="dialog" onClick={(e) => e.stopPropagation()}>
-        <h3>Exporter en PNG</h3>
+        <h3>{t("png.title")}</h3>
         <label>
-          Largeur (px)
+          {t("png.width")}
           <input type="number" min={1} value={width} onChange={(e) => setWidth(Number(e.target.value))} />
         </label>
         <label>
-          Hauteur (px)
+          {t("png.height")}
           <input type="number" min={1} value={height} onChange={(e) => setHeight(Number(e.target.value))} />
         </label>
         <div className="dialog-actions">
-          <button onClick={onClose}>Annuler</button>
+          <button onClick={onClose}>{t("common.cancel")}</button>
           <button className="primary" onClick={() => void handleExport()}>
-            Exporter
+            {t("common.export")}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { isPlausibleScene } from "../scene/validate";
 import { useDocumentStore } from "../store/documentStore";
 import { useSceneStore } from "../store/sceneStore";
+import { t } from "../i18n";
 
 const AUTOSAVE_DELAY_MS = 30_000;
 
@@ -15,7 +16,7 @@ export function useDocumentSafety() {
       .then((scene) => {
         if (scene && isPlausibleScene(scene)) {
           useDocumentStore.getState().setRecoveryAvailable(true);
-          if (window.confirm("Une sauvegarde de récupération a été trouvée. Voulez-vous la restaurer ?")) {
+          if (window.confirm(t("dialog.recovery"))) {
             useSceneStore.getState().replaceScene(scene);
             useDocumentStore.getState().markDirty();
           } else {

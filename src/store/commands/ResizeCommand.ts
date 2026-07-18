@@ -1,12 +1,13 @@
 import type { ElementId, SceneNode } from "../../scene/types";
 import { useSceneStore } from "../sceneStore";
 import type { Command } from "./Command";
+import { t } from "../../i18n";
 
 type GeometryPatch = Partial<SceneNode>;
 
 /** Captures before/after transform + shape-specific dimensions (width/height/rx/ry/points/x2/y2) for a resize gesture. */
 export class ResizeCommand implements Command {
-  label = "Redimensionner";
+  label = t("command.resize");
 
   constructor(
     private id: ElementId,

@@ -19,14 +19,14 @@ fn image_mime_for_extension(path: &str) -> Result<&'static str, String> {
         "jpg" | "jpeg" => Ok("image/jpeg"),
         "gif" => Ok("image/gif"),
         "webp" => Ok("image/webp"),
-        _ => Err("Format d'image non supporté (png, jpg, gif, webp uniquement).".to_string()),
+        _ => Err("i18n:image.unsupported".to_string()),
     }
 }
 
 fn read_capped(path: &str) -> Result<Vec<u8>, String> {
     let metadata = fs::metadata(path).map_err(|e| e.to_string())?;
     if metadata.len() > MAX_IMAGE_BYTES {
-        return Err("Image trop volumineuse (limite 30 Mo).".to_string());
+        return Err("i18n:image.too_large".to_string());
     }
     fs::read(path).map_err(|e| e.to_string())
 }
@@ -113,7 +113,7 @@ pub async fn trace_image(path: String, options: TraceOptions) -> Result<String, 
         let img = image::load_from_memory(&bytes).map_err(|e| e.to_string())?;
         let (width, height) = (img.width(), img.height());
         if width == 0 || height == 0 {
-            return Err("Image vide.".to_string());
+            return Err("i18n:image.empty".to_string());
         }
         let longest = width.max(height);
         let resized = if longest > MAX_TRACE_DIM {
@@ -131,16 +131,12 @@ pub async fn trace_image(path: String, options: TraceOptions) -> Result<String, 
         let svg = vtracer::convert(color_image, options.to_config())?.to_string();
         let path_count = svg.matches("<path").count();
         if path_count > MAX_TRACE_PATHS {
-            return Err(format!(
-                "Le tracé produirait {path_count} formes — bien trop pour rester éditable (limite {MAX_TRACE_PATHS}). \
-                 Essayez : augmenter « Filtrer le bruit », réduire « Précision des couleurs », \
-                 ou passer en mode couleur « Noir et blanc »."
-            ));
+            return Err(format!("i18n:image.trace_too_complex:{path_count}:{MAX_TRACE_PATHS}"));
         }
         Ok(svg)
     })
     .await
-    .map_err(|e| format!("Le tracé a échoué de façon inattendue : {e}"))?
+    .map_err(|_| "i18n:image.trace_failed".to_string())?
 }
 
 #[cfg(test)]

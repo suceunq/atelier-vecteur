@@ -1,6 +1,7 @@
 import type { ElementId, LayerId, SceneNode } from "../../scene/types";
 import { useSceneStore } from "../sceneStore";
 import type { Command } from "./Command";
+import { t } from "../../i18n";
 
 interface RemovedEntry {
   node: SceneNode;
@@ -21,7 +22,7 @@ function expandWithGroupChildren(ids: ElementId[], elements: Record<ElementId, S
 }
 
 export class DeleteCommand implements Command {
-  label = "Supprimer";
+  label = t("command.delete");
   private removed: RemovedEntry[] = [];
 
   constructor(private ids: ElementId[]) {}

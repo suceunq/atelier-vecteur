@@ -34,7 +34,7 @@ pub fn load_recovery(app: AppHandle) -> Result<Option<serde_json::Value>, String
     }
     let metadata = fs::metadata(&path).map_err(|e| e.to_string())?;
     if metadata.len() > MAX_ENTRY_BYTES {
-        return Err("La sauvegarde de récupération est trop volumineuse.".to_string());
+        return Err("i18n:recovery.too_large".to_string());
     }
     let bytes = fs::read(path).map_err(|e| e.to_string())?;
     serde_json::from_slice(&bytes).map(Some).map_err(|e| e.to_string())
@@ -61,7 +61,7 @@ fn read_entry_to_string<R: Read>(entry: &mut R, name: &str) -> Result<String, St
 #[command]
 pub fn save_project(path: String, scene: serde_json::Value) -> Result<(), String> {
     if !path.to_ascii_lowercase().ends_with(".svgatelier") {
-        return Err("Le fichier de destination doit avoir l'extension .svgatelier".to_string());
+        return Err("i18n:export.extension:.svgatelier".to_string());
     }
     let file = File::create(&path).map_err(|e| e.to_string())?;
     let mut zip = ZipWriter::new(file);

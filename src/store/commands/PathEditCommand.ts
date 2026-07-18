@@ -1,10 +1,11 @@
 import type { ElementId, PathNode } from "../../scene/types";
 import { useSceneStore } from "../sceneStore";
 import type { Command } from "./Command";
+import { t } from "../../i18n";
 
 /** Snapshots the full path before/after a node-edit gesture (move anchor/handle, insert/delete node, convert type). */
 export class PathEditCommand implements Command {
-  label = "Modifier le tracé";
+  label = t("command.path");
 
   constructor(
     private id: ElementId,

@@ -13,6 +13,13 @@ Atelier Vecteur est un éditeur vectoriel de bureau construit avec React, TypeSc
 - export SVG et PNG ;
 - historique annuler/rétablir et sauvegarde de récupération ;
 - thème sombre, grille, magnétisme et mises à jour signées.
+- interface localisée en français, anglais, espagnol et allemand, avec détection de la langue système.
+
+## Langues
+
+Au premier lancement, Atelier Vecteur utilise la langue du système si elle est prise en charge, sinon l’anglais. La langue peut être changée immédiatement depuis **Affichage > Paramètres**. La préférence est conservée localement.
+
+Tous les nouveaux textes visibles doivent être ajoutés aux quatre catalogues de `src/i18n/index.ts`. Le test i18n vérifie qu’aucune clé ne manque dans une langue.
 
 ## Développement
 
