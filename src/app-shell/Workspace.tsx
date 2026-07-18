@@ -12,10 +12,19 @@ import { PropertiesPanel } from "../panels/PropertiesPanel/PropertiesPanel";
 import { MenuBar } from "./MenuBar";
 import { StatusBar } from "./StatusBar";
 import { Toolbar } from "./Toolbar";
+import { useEffect } from "react";
+import { loadRemoteDonationUrl } from "../config/runtimeConfig";
+import { useSettingsStore } from "../store/settingsStore";
 
 export function Workspace() {
   useKeyboardShortcuts();
   useDocumentSafety();
+
+  useEffect(() => {
+    void loadRemoteDonationUrl().then((url) => {
+      if (url) useSettingsStore.getState().setRemoteDonationUrl(url);
+    });
+  }, []);
 
   return (
     <div className="workspace">

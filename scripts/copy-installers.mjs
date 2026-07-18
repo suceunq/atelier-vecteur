@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "Atelier Vecteur est désormais entièrement disponible en français, anglais, espagnol et allemand, avec détection automatique de la langue du système et sélection manuelle dans les paramètres.",
+    notes: "Nouvelle fenêtre de bienvenue multilingue, avec contrôle d’affichage au démarrage, présentation du logiciel et soutien du projet via un lien PayPal configurable sans recompilation.",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {

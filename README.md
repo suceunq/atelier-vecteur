@@ -12,14 +12,21 @@ Atelier Vecteur est un éditeur vectoriel de bureau construit avec React, TypeSc
 - conversion du texte en tracés ;
 - export SVG et PNG ;
 - historique annuler/rétablir et sauvegarde de récupération ;
-- thème sombre, grille, magnétisme et mises à jour signées.
+- thème sombre, grille, magnétisme et mises à jour signées ;
 - interface localisée en français, anglais, espagnol et allemand, avec détection de la langue système.
+- fenêtre de bienvenue facultative et soutien du projet via PayPal.
 
 ## Langues
 
 Au premier lancement, Atelier Vecteur utilise la langue du système si elle est prise en charge, sinon l’anglais. La langue peut être changée immédiatement depuis **Affichage > Paramètres**. La préférence est conservée localement.
 
 Tous les nouveaux textes visibles doivent être ajoutés aux quatre catalogues de `src/i18n/index.ts`. Le test i18n vérifie qu’aucune clé ne manque dans une langue.
+
+## Configuration des dons
+
+Le bouton de don n’accepte que les adresses HTTPS officielles `paypal.com` et `paypal.me`. Le lien partagé par défaut se trouve dans `public/runtime-config.json`. L’application relit automatiquement ce fichier depuis la branche `master` sur GitHub au démarrage : modifier puis publier uniquement ce fichier suffit donc à changer la destination pour tous les utilisateurs, sans recompiler ni republier l’installateur.
+
+Chaque installation peut également définir un remplacement local dans **Affichage > Paramètres > Soutien du projet**. Un champ vide utilise le lien partagé. Si l’application est hors ligne, le remplacement local continue de fonctionner ; sans remplacement, le bouton reste désactivé jusqu’à ce que la configuration partagée soit accessible.
 
 ## Développement
 
