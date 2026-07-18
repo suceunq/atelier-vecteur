@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Atelier Vecteur",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "identifier": "com.calib.svg-atelier",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -45,7 +45,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY3M0VFQ0FDNEQ1ODAyNApSV1FrZ05YRXl1NXpEMXM3cjNDTVdSM0x1eUFndzlIOFdxcW1PVDZzZG1jOEJuZWQxRy9venAxdQo=",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVEQURDQTAzMkUzOTJCQQpSV1M2a3VNeW9OemFCWVd1TjUrMlZPTkgvQWF5N1J2c1M1ZGZUMEdvbkQ1RU93ZzBmUlZ6YWx1Lwo=",
       "endpoints": [
         "https://github.com/suceunq/atelier-vecteur/releases/latest/download/latest.json"
       ]

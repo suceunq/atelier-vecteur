@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "Le lien PayPal officiel est désormais géré uniquement par la configuration du projet et n’est plus visible ni modifiable dans les paramètres.",
+    notes: "Corrige le bouton « Faire un don avec PayPal » de la fenêtre de bienvenue, qui ne réagissait plus au clic (permission opener:allow-default-urls manquante).",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {
