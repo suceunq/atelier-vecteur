@@ -33,7 +33,7 @@ if (existsSync(signaturePath)) {
   const releaseAssetName = setupExe.replaceAll(" ", ".");
   const manifest = {
     version,
-    notes: "Ajoute les opérations booléennes (union, soustraction, intersection, exclusion) entre formes sélectionnées, dans un nouveau panneau à côté de l'alignement.",
+    notes: "Interface repensée : barre d'outils avec icônes vectorielles, menus et dialogues animés, panneaux plus soignés, thème sombre affiné.",
     pub_date: new Date().toISOString(),
     platforms: {
       "windows-x86_64": {
