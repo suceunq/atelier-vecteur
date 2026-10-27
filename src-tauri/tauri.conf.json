@@ -45,7 +45,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVEQURDQTAzMkUzOTJCQQpSV1M2a3VNeW9OemFCWVd1TjUrMlZPTkgvQWF5N1J2c1M1ZGZUMEdvbkQ1RU93ZzBmUlZ6YWx1Lwo=",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMwRDg5OEVCMEYzQ0M5NkQKUldSdHlUd1A2NWpZTUNLUVlPYlgvRWNFTUtORk9Ha0lmeElVRmVzVnEyb1RJNVN6bkFNa3ZSSzQK",
       "endpoints": [
         "https://github.com/suceunq/atelier-vecteur/releases/latest/download/latest.json"
       ]

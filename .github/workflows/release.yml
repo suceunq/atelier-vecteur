@@ -1,0 +1,67 @@
+name: Publier une version Windows
+
+# Un tag vX.Y.Z (identique à la version de src-tauri/tauri.conf.json) compile l'application,
+# signe l'installateur avec la clé des mises à jour (secrets TAURI_SIGNING_PRIVATE_KEY et
+# TAURI_SIGNING_PRIVATE_KEY_PASSWORD) et publie la Release avec latest.json : les utilisateurs
+# déjà installés reçoivent alors la mise à jour automatiquement.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Récupérer les sources
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Tester
+        run: npm test
+
+      - name: Préparer les notes de version
+        id: notes
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $version = $env:RELEASE_TAG -replace '^v', ''
+          $source = "RELEASE_NOTES_$version.md"
+          if (-not (Test-Path -LiteralPath $source)) {
+            throw "Notes de version absentes : $source"
+          }
+          $config = Get-Content -LiteralPath src-tauri/tauri.conf.json -Raw -Encoding utf8 | ConvertFrom-Json
+          if ($config.version -ne $version) {
+            throw "Le tag $env:RELEASE_TAG ne correspond pas à la version $($config.version) de tauri.conf.json."
+          }
+          $delimiter = "EOF_$([guid]::NewGuid().ToString('N'))"
+          "body<<$delimiter" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Get-Content -LiteralPath $source -Raw -Encoding utf8 | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          $delimiter | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Compiler, signer et publier
+        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # action-v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Atelier Vecteur __VERSION__
+          releaseBody: ${{ steps.notes.outputs.body }}
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true
+          args: --bundles nsis
